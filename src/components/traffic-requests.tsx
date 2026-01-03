@@ -107,7 +107,6 @@ export function TrafficRequests() {
     }
 
     if (loading) return null
-    if (requests.length === 0 && notifications.length === 0) return null
 
     return (
         <Card className="border-none shadow-xl ring-1 ring-slate-200 mb-8 overflow-hidden">
