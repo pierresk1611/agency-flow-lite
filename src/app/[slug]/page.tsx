@@ -266,7 +266,7 @@ export default async function DashboardPage({ params }: { params: { slug: string
           )}
 
           {/* ČAKÁ NA SCHVÁLENIE */}
-          {!isCreative && pendingTimesheetsData.length > 0 && (
+          {!isCreative && (
             <PendingApprovals timesheets={pendingTimesheetsData} slug={params.slug} />
           )}
         </div>
