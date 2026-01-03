@@ -22,33 +22,37 @@ export function BurningTasks({ tasks, slug }: { tasks: Task[], slug: string }) {
     if (tasks.length === 0) return null
 
     return (
-        <Card className="shadow-xl border-none ring-1 ring-red-100 bg-red-50/30">
-            <CardHeader className="border-b bg-red-50/50 py-3">
-                <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-red-700">
-                    <Flame className="h-4 w-4 fill-red-600 animate-pulse" /> Horiace Tasky (do 5 dní)
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 px-0">
-                <div className="divide-y divide-red-100">
-                    {tasks.map(task => {
-                        const daysLeft = task.deadline ? differenceInDays(new Date(task.deadline), new Date()) : 0
-
+        <Card className="shadow-lg border-none ring-1 ring-slate-200">
+            <CardContent className="p-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-2 mb-3">
+                    <Flame className="h-4 w-4 text-red-600" />
+                    Burning Tasks ({tasks.length})
+                </h3>
+                <div className="space-y-2">
+                    {tasks.slice(0, 5).map(task => {
                         return (
-                            <div key={task.id} className="p-3 flex items-center justify-between hover:bg-red-50 transition-colors group">
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">{task.campaign.client.name}</span>
-                                    <span className="font-semibold text-sm text-slate-800 group-hover:text-red-700 transition-colors">{task.title}</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-1.5 text-xs font-medium text-red-600 bg-red-100/50 px-2 py-1 rounded-md">
-                                        <Calendar className="h-3.5 w-3.5" />
-                                        {task.deadline ? format(new Date(task.deadline), 'd. M.', { locale: sk }) : ''}
+                            <Link
+                                key={task.id}
+                                href={`/${slug}/jobs/${task.id}`}
+                                className="block p-3 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-xs font-bold text-slate-900">
+                                                {task.title}
+                                            </span>
+                                            <Badge className="bg-red-600 text-white text-[10px] px-1.5 py-0 h-4 border-none">
+                                                {task.deadline ? format(new Date(task.deadline), 'dd.MM.') : ''}
+                                            </Badge>
+                                        </div>
+                                        <p className="text-xs text-slate-500">
+                                            {task.campaign.client.name}
+                                        </p>
                                     </div>
-                                    <Link href={`/${slug}/jobs/${task.id}`}>
-                                        <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-red-600 transition-colors" />
-                                    </Link>
+                                    <ArrowRight className="h-4 w-4 text-slate-400 flex-shrink-0 mt-1" />
                                 </div>
-                            </div>
+                            </Link>
                         )
                     })}
                 </div>
