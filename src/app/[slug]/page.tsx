@@ -261,9 +261,7 @@ export default async function DashboardPage({ params }: { params: { slug: string
           {!isCreative && <TrafficRequests />}
 
           {/* BURNING TASKS */}
-          {burningTasks.length > 0 && (
-            <BurningTasks tasks={burningTasks} slug={params.slug} />
-          )}
+          <BurningTasks tasks={burningTasks} slug={params.slug} />
 
           {/* ČAKÁ NA SCHVÁLENIE */}
           {!isCreative && (
