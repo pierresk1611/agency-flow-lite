@@ -297,16 +297,18 @@ export default async function DashboardPage({ params }: { params: { slug: string
         </div>
 
         {/* FINANCIAL CHART - FULL WIDTH */}
-        <Card className="shadow-xl border-none ring-1 ring-slate-200">
-          <CardHeader className="border-b bg-slate-50/50 py-3">
-            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500">
-              <BarChart3 className="h-4 w-4" /> Finančný Stav Projektov
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <BudgetChart data={budgetData} slug={params.slug} />
-          </CardContent>
-        </Card>
+        {!isCreative && (
+          <Card className="shadow-xl border-none ring-1 ring-slate-200">
+            <CardHeader className="border-b bg-slate-50/50 py-3">
+              <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500">
+                <BarChart3 className="h-4 w-4" /> Finančný Stav Projektov
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <BudgetChart data={budgetData} slug={params.slug} />
+            </CardContent>
+          </Card>
+        )}
 
         {/* TIMESHEET STATUS */}
         {!isCreative && (
