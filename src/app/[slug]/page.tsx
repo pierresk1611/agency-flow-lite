@@ -144,13 +144,7 @@ export default async function DashboardPage({ params }: { params: { slug: string
             <h2 className="text-3xl font-black tracking-tighter text-slate-900 uppercase italic">Manažérsky Prehľad</h2>
             <p className="text-slate-500 text-sm font-medium">Agentúra: {agency.name}</p>
           </div>
-          {!isCreative && (
-            <Link href={`/${params.slug}/timesheets`}>
-              <Button variant="outline" className="gap-2 shadow-sm font-bold border-slate-300">
-                <Download className="h-4 w-4" /> Export CSV
-              </Button>
-            </Link>
-          )}
+
         </div>
 
         {/* 🆕 APPROVALS WIDGET (TOP OF DASHBOARD) */}
