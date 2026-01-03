@@ -210,11 +210,11 @@ function NotificationItem({ notif, onRead, onClear }: { notif: Notification, onR
             <Button
                 size="sm"
                 variant="ghost"
-                className="absolute top-2 right-2 h-6 w-6 p-0 text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                className="absolute top-2 right-2 h-7 w-7 p-0 text-slate-400 hover:text-red-600 hover:bg-red-100 transition-all cursor-pointer"
                 onClick={(e) => onClear(e, notif)}
                 title="Označiť ako prečítané (bez otvorenia)"
             >
-                <X className="h-3 w-3" />
+                <X className="h-4 w-4" />
             </Button>
         </div>
     )
