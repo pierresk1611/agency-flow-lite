@@ -10,24 +10,30 @@ export async function POST(req: Request, { params }: { params: { agencyId: strin
     }
 
     try {
-        const { days } = await req.json()
-        const daysToAdd = parseInt(days)
-
-        if (isNaN(daysToAdd) || daysToAdd <= 0) {
-            return NextResponse.json({ error: 'Invalid days' }, { status: 400 })
-        }
+        const { days, permanent } = await req.json()
 
         const agency = await prisma.agency.findUnique({ where: { id: params.agencyId } })
         if (!agency) {
             return NextResponse.json({ error: 'Agency not found' }, { status: 404 })
         }
 
-        // Default to now if no trial date set, otherwise add to existing date
-        const baseDate = agency.trialEndsAt && new Date(agency.trialEndsAt) > new Date()
-            ? new Date(agency.trialEndsAt)
-            : new Date()
+        let newTrialEndsAt: Date | null = null;
 
-        const newTrialEndsAt = addDays(baseDate, daysToAdd)
+        if (permanent) {
+            newTrialEndsAt = null // Permanent access
+        } else {
+            const daysToAdd = parseInt(days)
+            if (isNaN(daysToAdd) || daysToAdd <= 0) {
+                return NextResponse.json({ error: 'Invalid days' }, { status: 400 })
+            }
+
+            // Default to now if no trial date set, otherwise add to existing date
+            const baseDate = agency.trialEndsAt && new Date(agency.trialEndsAt) > new Date()
+                ? new Date(agency.trialEndsAt)
+                : new Date()
+
+            newTrialEndsAt = addDays(baseDate, daysToAdd)
+        }
 
         await prisma.agency.update({
             where: { id: params.agencyId },

@@ -153,6 +153,9 @@ export default async function DashboardPage({ params }: { params: { slug: string
           )}
         </div>
 
+        {/* 🆕 APPROVALS WIDGET (TOP OF DASHBOARD) */}
+        {!isCreative && <TrafficRequests />}
+
         {!isCreative && (
           <Card className="shadow-xl border-none ring-1 ring-slate-200">
             <CardHeader className="border-b bg-slate-50/50 py-3">
@@ -187,9 +190,6 @@ export default async function DashboardPage({ params }: { params: { slug: string
 
             {!isCreative && (
               <div className="grid grid-cols-1 gap-6">
-
-                {/* 🆕 APPROVALS WIDGET (REASSIGNMENTS) */}
-                <TrafficRequests />
 
                 <Card className="shadow-xl border-none ring-1 ring-slate-200">
                   <CardHeader className="border-b bg-slate-50/50 py-3">

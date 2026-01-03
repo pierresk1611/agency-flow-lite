@@ -31,6 +31,13 @@ export default async function AgencyLayout({
   // ✅ Ochrana rolí: Creative a Traffic môže vidieť len svoj priestor
   if (!dbUnavailable) {
     const agencyId = agency ? agency.id : null
+
+    // 1. Kontrola expirácie trialu
+    if (agency?.trialEndsAt && new Date(agency.trialEndsAt) < new Date() && session.role !== 'SUPERADMIN') {
+      redirect('/trial-expired')
+    }
+
+    // 2. Kontrola prístupu k agentúre
     if (session.role !== 'SUPERADMIN' && session.agencyId !== agencyId) {
       const myAgency = await prisma.agency.findUnique({ where: { id: session.agencyId } })
       if (myAgency) redirect(`/${myAgency.slug}`)
