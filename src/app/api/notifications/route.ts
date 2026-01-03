@@ -7,11 +7,19 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const notifications = await prisma.notification.findMany({
-      where: {
-        userId: session.userId,
+    let whereClause: any = { userId: session.userId, isRead: false }
+
+    // GOD MODE: Superadmin vidí všetky notifikácie v agentúre
+    if (session.role === 'SUPERADMIN') {
+      whereClause = {
+        user: { agencyId: session.agencyId },
         isRead: false
-      },
+      }
+    }
+
+    const notifications = await prisma.notification.findMany({
+      where: whereClause,
+      include: { user: { select: { name: true, email: true } } }, // Aby sme videli komu patrí
       orderBy: { createdAt: 'desc' }
     })
     return NextResponse.json(notifications)
