@@ -28,7 +28,8 @@ export async function POST(req: Request, { params }: { params: { jobId: string }
     if (agencyId) {
       const approvers = await prisma.user.findMany({ where: { agencyId, role: { in: ['ADMIN', 'ACCOUNT', 'TRAFFIC'] } } })
       for (const a of approvers) {
-        await createNotification(a.id, 'Reassignment Request', `User ${session.userId} requested reassignment for job ${assignment?.jobId}.`, `/`) 
+        // Updated link to include requestId for Smart Cleanup
+        await createNotification(a.id, 'Reassignment Request', `User ${session.userId} requested reassignment for job ${assignment?.jobId}.`, `/traffic?requestId=${reqRow.id}`)
       }
     }
 

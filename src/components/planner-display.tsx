@@ -118,31 +118,30 @@ export function PlannerDisplay({ initialEntries, allJobs, readOnly = false }: { 
     }, [])
 
     const today = new Date()
-    const weekStart = startOfWeek(today, { weekStartsOn: 1 })
-    const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 }) // Start Monday
+    // 2 weeks view (14 days)
+    const days = Array.from({ length: 14 }, (_, i) => addDays(weekStart, i))
 
     // LOGIKA GRAFU
     const plannedHoursData = days.map(day => {
         const totalMinutes = entries
             .filter(e => isValid(new Date(e.date)) && format(new Date(e.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'))
             .reduce((sum, e) => sum + e.minutes, 0)
-
         return { name: format(day, 'E'), hodiny: totalMinutes / 60, minutes: totalMinutes }
     })
 
     if (!isMounted) return <div className="h-[250px] w-full bg-slate-50 animate-pulse rounded-xl" />
 
-
     return (
         <div className="space-y-6">
             <Card className="shadow-lg border-none ring-1 ring-slate-200 overflow-hidden">
                 <CardHeader className="p-4 bg-slate-900 text-white flex flex-row items-center justify-between">
-                    <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><Clock className="h-4 w-4" /> Naplánovaná Kapacita</CardTitle>
+                    <CardTitle className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2"><Clock className="h-4 w-4" /> Kapacita (2 týždne)</CardTitle>
                     <Badge variant="secondary" className="bg-white/10 text-white font-bold text-xs">{Math.floor(plannedHoursData.reduce((s, i) => s + i.minutes, 0) / 60)}h</Badge>
                 </CardHeader>
                 <CardContent className="pt-4 h-[250px] min-w-0">
-                        <SafeResponsiveContainer className="h-full">
-                            <BarChart data={plannedHoursData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <SafeResponsiveContainer className="h-full">
+                        <BarChart data={plannedHoursData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                             <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} />
                             <YAxis fontSize={10} axisLine={false} tickLine={false} />
                             <Tooltip />
@@ -152,46 +151,72 @@ export function PlannerDisplay({ initialEntries, allJobs, readOnly = false }: { 
                 </CardContent>
             </Card>
 
+            <div className="w-full overflow-x-auto pb-4">
+                <div className="flex gap-4 min-w-max">
+                    {days.map(day => {
+                        const dayStr = format(day, 'yyyy-MM-dd')
+                        const dayEntries = entries.filter(e => isValid(new Date(e.date)) && format(new Date(e.date), 'yyyy-MM-dd') === dayStr)
+                        const isToday = dayStr === format(today, 'yyyy-MM-dd')
+                        const isPast = day < new Date(today.setHours(0, 0, 0, 0))
 
-            <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-                {days.map(day => {
-                    const dayEntries = entries.filter(e => isValid(new Date(e.date)) && format(new Date(e.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'))
-                    const isToday = format(day, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')
+                        return (
+                            <Card
+                                key={day.toString()}
+                                className={`w-[200px] min-h-[250px] shadow-md flex-shrink-0 transition-all 
+                                    ${isToday ? 'ring-2 ring-blue-500' : ''} 
+                                    ${isPast ? 'opacity-60 grayscale' : ''}
+                                `}
+                            >
+                                <CardHeader className="p-3 border-b bg-slate-50/50">
+                                    <p className="text-[10px] font-black uppercase text-slate-400">{format(day, 'EEEE')}</p>
+                                    <p className="text-sm font-bold">{format(day, 'd. MMMM')}</p>
+                                </CardHeader>
+                                <CardContent className="p-2 space-y-2">
+                                    {dayEntries.length === 0 ? (
+                                        <p className="text-center py-6 text-slate-400 text-xs italic">Voľný deň.</p>
+                                    ) : (
+                                        dayEntries.map(e => {
+                                            // Color Logic
+                                            const plan = e.minutes
+                                            const real = e.realMinutes || 0
 
-                    return (
-                        <Card key={day.toString()} className={`min-h-[250px] shadow-md ${isToday ? 'ring-2 ring-blue-500' : ''}`}>
-                            <CardHeader className="p-3 border-b bg-slate-50/50">
-                                <p className="text-[10px] font-black uppercase text-slate-400">{format(day, 'EEEE')}</p>
-                                <p className="text-sm font-bold">{format(day, 'd. MMMM')}</p>
-                            </CardHeader>
-                            <CardContent className="p-2 space-y-2">
-                                {dayEntries.length === 0 ? (
-                                    <p className="text-center py-6 text-slate-400 text-xs italic">Voľný deň.</p>
-                                ) : (
-                                    dayEntries.map(e => (
-                                        <div key={e.id} className="p-2 bg-white border rounded text-[10px] shadow-sm flex flex-col gap-2">
-                                            <div className="w-full">
-                                                <p className="font-bold text-blue-600 uppercase break-words leading-tight">{e.job?.campaign?.client?.name || 'Interná práca'}</p>
-                                                <p className="font-medium truncate mt-1">{e.title}</p>
-                                            </div>
+                                            let borderClass = "border-slate-200"
+                                            if (real > plan) borderClass = "border-red-400 bg-red-50"
+                                            else if (real > 0 && real <= plan) borderClass = "border-blue-400 bg-blue-50"
 
-                                            <div>
-                                                <Badge variant="outline" className="text-[8px] h-4 inline-flex">{e.minutes}m</Badge>
-                                            </div>
+                                            // Content Title
+                                            const jobName = e.job?.campaign?.client?.name || 'Interná práca'
 
-                                            {!readOnly && (
-                                                <div className="flex items-center justify-end gap-1 w-full pt-1 border-t border-slate-100">
-                                                    <EditDialog entry={e} allJobs={allJobs} onSave={() => router.refresh()} />
-                                                    <DeleteButton entryId={e.id} />
+                                            return (
+                                                <div key={e.id} className={`p-2 border rounded text-[10px] shadow-sm flex flex-col gap-2 ${borderClass}`}>
+                                                    <div className="w-full">
+                                                        <p className="font-bold text-slate-700 uppercase break-words leading-tight">{jobName}</p>
+                                                        <p className="font-medium truncate mt-1">{e.title}</p>
+                                                    </div>
+
+                                                    <div className="flex justify-between items-center">
+                                                        <Badge variant="outline" className="text-[8px] h-4 inline-flex gap-1">
+                                                            <span>{plan}m</span>
+                                                            <span className="text-slate-300">/</span>
+                                                            <span className={real > plan ? "text-red-600 font-bold" : "text-slate-600"}>{real}m</span>
+                                                        </Badge>
+                                                    </div>
+
+                                                    {!readOnly && (
+                                                        <div className="flex items-center justify-end gap-1 w-full pt-1 border-t border-slate-100/50">
+                                                            <EditDialog entry={e} allJobs={allJobs} onSave={() => router.refresh()} />
+                                                            <DeleteButton entryId={e.id} />
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                        </div>
-                                    ))
-                                )}
-                            </CardContent>
-                        </Card>
-                    )
-                })}
+                                            )
+                                        })
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )
+                    })}
+                </div>
             </div>
         </div>
     )

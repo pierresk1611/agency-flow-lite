@@ -111,6 +111,38 @@ export async function POST(request: Request) {
                 }
             })
 
+            // --- PLANNER VS REALITY ---
+            const todayStart = new Date(now)
+            todayStart.setHours(0, 0, 0, 0)
+            const todayEnd = new Date(now)
+            todayEnd.setHours(23, 59, 59, 999)
+
+            const existingPlannerEntry = await prisma.plannerEntry.findFirst({
+                where: {
+                    userId: userId,
+                    jobId: jobId,
+                    date: { gte: todayStart, lte: todayEnd }
+                }
+            })
+
+            if (existingPlannerEntry) {
+                await prisma.plannerEntry.update({
+                    where: { id: existingPlannerEntry.id },
+                    data: { realMinutes: { increment: durationMinutes } }
+                })
+            } else {
+                await prisma.plannerEntry.create({
+                    data: {
+                        userId: userId,
+                        jobId: jobId,
+                        date: now,
+                        minutes: 0,
+                        realMinutes: durationMinutes,
+                        title: "Neplánovaná práca"
+                    }
+                })
+            }
+
             // NOTIFIKÁCIA: Timesheet Submit (Pre Traffic & Account)
             // 1. Zistiť kto má dostať notifikáciu (v danej agentúre)
             // Predpokladáme, že Client má agentúru, Job má Campaign má Client...

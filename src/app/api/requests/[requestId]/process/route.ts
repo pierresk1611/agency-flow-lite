@@ -48,6 +48,16 @@ export async function POST(req: Request, { params }: { params: { requestId: stri
             await createNotification(request.requestByUserId, 'Žiadosť zamietnutá', `Vaša žiadosť o presun jobu bola zamietnutá.`, `/jobs/${request.assignment.jobId}`)
         }
 
+        // SMART CLEANUP: Mark related notifications as read for ALL managers
+        // (Keď jeden vyrieši, ostatným zmizne)
+        await prisma.notification.updateMany({
+            where: {
+                link: { contains: `requestId=${requestId}` },
+                isRead: false
+            },
+            data: { isRead: true }
+        })
+
         return NextResponse.json({ success: true })
 
     } catch (error: any) {

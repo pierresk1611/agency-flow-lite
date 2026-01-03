@@ -43,6 +43,8 @@ export default async function TimesheetsPage({ params }: { params: { slug: strin
     }
   })
 
+  const isAdmin = ['ADMIN', 'SUPERADMIN'].includes(session.role)
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -67,6 +69,7 @@ export default async function TimesheetsPage({ params }: { params: { slug: strin
             <TimesheetTable
               data={timesheets.filter(t => t.status === 'PENDING')}
               isCreative={isCreative}
+              isAdmin={isAdmin}
               showActions={!isCreative}
               emptyMessage="Všetko vybavené. Žiadne čakačky."
             />
@@ -85,6 +88,7 @@ export default async function TimesheetsPage({ params }: { params: { slug: strin
             <TimesheetTable
               data={timesheets.filter(t => t.status !== 'PENDING')}
               isCreative={isCreative}
+              isAdmin={isAdmin}
               showActions={false} // V histórii už neakciujeme (zatiaľ)
               emptyMessage="Žiadna história."
             />
@@ -95,7 +99,7 @@ export default async function TimesheetsPage({ params }: { params: { slug: strin
   )
 }
 
-function TimesheetTable({ data, isCreative, showActions, emptyMessage }: any) {
+function TimesheetTable({ data, isCreative, isAdmin, showActions, emptyMessage }: any) {
   return (
     <Table className="min-w-[900px]">
       <TableHeader className="bg-slate-100 text-[10px] font-black uppercase">
@@ -103,6 +107,8 @@ function TimesheetTable({ data, isCreative, showActions, emptyMessage }: any) {
           <TableHead className="pl-6">Kedy / Kto</TableHead>
           <TableHead>Projekt</TableHead>
           <TableHead>Trvanie</TableHead>
+          {isAdmin && <TableHead className="text-right">Náklad</TableHead>}
+          {isAdmin && <TableHead className="text-right">Fakturácia</TableHead>}
           <TableHead>Status</TableHead>
           <TableHead className="text-right pr-6">Akcia</TableHead>
         </TableRow>
@@ -110,13 +116,17 @@ function TimesheetTable({ data, isCreative, showActions, emptyMessage }: any) {
       <TableBody>
         {data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="h-24 text-center text-muted-foreground italic text-sm">
+            <TableCell colSpan={isAdmin ? 7 : 5} className="h-24 text-center text-muted-foreground italic text-sm">
               {emptyMessage}
             </TableCell>
           </TableRow>
         ) : (
           data.map((ts: any) => {
             const isRunning = ts.endTime === null
+            const hours = (ts.durationMinutes || 0) / 60
+            const cost = hours * (ts.jobAssignment.user?.costRate || 0)
+            const billable = hours * (ts.jobAssignment.user?.hourlyRate || 0)
+
             return (
               <TableRow
                 key={ts.id}
@@ -151,6 +161,16 @@ function TimesheetTable({ data, isCreative, showActions, emptyMessage }: any) {
                     </span>
                   )}
                 </TableCell>
+                {isAdmin && (
+                  <TableCell className="text-right font-mono text-xs text-slate-500">
+                    {cost.toFixed(2)}€
+                  </TableCell>
+                )}
+                {isAdmin && (
+                  <TableCell className="text-right font-mono text-xs font-bold text-slate-900">
+                    {billable.toFixed(2)}€
+                  </TableCell>
+                )}
                 <TableCell>
                   <div className="flex flex-col gap-1">
                     {ts.status === 'APPROVED' && (

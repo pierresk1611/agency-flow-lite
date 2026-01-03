@@ -1,4 +1,9 @@
 import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Bell } from "lucide-react"
+import { format } from "date-fns"
 
 export function NotificationsBell() {
   const router = useRouter()
@@ -27,7 +32,7 @@ export function NotificationsBell() {
   return (
     <Dialog open={isOpen} onOpenChange={(val) => {
       setIsOpen(val)
-      if (val) markAllAsRead()
+      // if (val) markAllAsRead() // REMOVED: Manual read only
     }}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
@@ -48,7 +53,19 @@ export function NotificationsBell() {
             notes.map(n => (
               <div
                 key={n.id}
-                onClick={() => {
+                onClick={async () => {
+                  // Manual Mark as Read Logic
+                  if (!n.isRead) {
+                    await fetch('/api/notifications', {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ id: n.id })
+                    })
+                    // Update local state without full refresh if possible, or just refresh
+                    setNotes(prev => prev.map(p => p.id === n.id ? { ...p, isRead: true } : p))
+                    // Decrement badge? unreadCount is derived from notes, so it updates auto.
+                  }
+
                   if (n.link) {
                     setIsOpen(false)
                     router.push(n.link)
