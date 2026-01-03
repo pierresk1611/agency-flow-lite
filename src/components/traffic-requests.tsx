@@ -98,6 +98,14 @@ export function TrafficRequests() {
         } catch (e) { console.error(e) }
     }
 
+    const handleClearNotification = async (e: React.MouseEvent, notif: Notification) => {
+        e.stopPropagation() // Prevent navigation
+        try {
+            await fetch(`/api/notifications/${notif.id}/read`, { method: 'POST' })
+            setNotifications(prev => prev.filter(n => n.id !== notif.id))
+        } catch (e) { console.error(e) }
+    }
+
     if (loading) return null
     if (requests.length === 0 && notifications.length === 0) return null
 
@@ -132,7 +140,7 @@ export function TrafficRequests() {
                                 <RequestItem key={req.id} req={req} onProcess={handleProcess} processingId={processingId} />
                             ))}
                             {notifications.map(notif => (
-                                <NotificationItem key={notif.id} notif={notif} onRead={handleReadNotification} />
+                                <NotificationItem key={notif.id} notif={notif} onRead={handleReadNotification} onClear={handleClearNotification} />
                             ))}
                         </div>
                     </TabsContent>
@@ -149,7 +157,7 @@ export function TrafficRequests() {
                     <TabsContent value="notifications" className="p-0 m-0">
                         <div className="divide-y max-h-[400px] overflow-y-auto">
                             {notifications.map(notif => (
-                                <NotificationItem key={notif.id} notif={notif} onRead={handleReadNotification} />
+                                <NotificationItem key={notif.id} notif={notif} onRead={handleReadNotification} onClear={handleClearNotification} />
                             ))}
                             {notifications.length === 0 && <div className="p-8 text-center text-xs text-slate-400 italic">Žiadne nové správy.</div>}
                         </div>
@@ -186,19 +194,28 @@ function RequestItem({ req, onProcess, processingId }: { req: Request, onProcess
     )
 }
 
-function NotificationItem({ notif, onRead }: { notif: Notification, onRead: any }) {
+function NotificationItem({ notif, onRead, onClear }: { notif: Notification, onRead: any, onClear: any }) {
     return (
-        <div onClick={() => onRead(notif)} className="p-4 flex gap-4 hover:bg-slate-50 transition cursor-pointer group">
+        <div onClick={() => onRead(notif)} className="p-4 flex gap-4 hover:bg-slate-50 transition cursor-pointer group relative">
             <div className="mt-1 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 group-hover:bg-blue-600 group-hover:text-white transition">
                 <Bell className="h-4 w-4" />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 flex-1 pr-8">
                 <div className="flex items-center gap-2 text-xs text-slate-500">
                     <span className="font-bold text-slate-900">{notif.title}</span>
                     <span className="text-[10px] text-slate-400">• {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 <p className="text-sm text-slate-600 line-clamp-2">{notif.message}</p>
             </div>
+            <Button
+                size="sm"
+                variant="ghost"
+                className="absolute top-2 right-2 h-6 w-6 p-0 text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                onClick={(e) => onClear(e, notif)}
+                title="Označiť ako prečítané (bez otvorenia)"
+            >
+                <X className="h-3 w-3" />
+            </Button>
         </div>
     )
 }
