@@ -258,15 +258,13 @@ export default async function DashboardPage({ params }: { params: { slug: string
         {/* 3-COLUMN LAYOUT: Centrum Upozornení | Burning Tasks | Čaká na Schválenie */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* CENTRUM UPOZORNENÍ - Reassignment Requests */}
-          {!isCreative && <TrafficRequests />}
+          <TrafficRequests />
 
           {/* BURNING TASKS */}
           <BurningTasks tasks={burningTasks} slug={params.slug} />
 
           {/* ČAKÁ NA SCHVÁLENIE */}
-          {!isCreative && (
-            <PendingApprovals timesheets={pendingTimesheetsData} slug={params.slug} />
-          )}
+          <PendingApprovals timesheets={pendingTimesheetsData} slug={params.slug} />
         </div>
 
         {/* CHARTS SECTION */}
