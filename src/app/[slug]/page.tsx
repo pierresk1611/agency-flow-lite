@@ -295,9 +295,14 @@ export default async function DashboardPage({ params }: { params: { slug: string
           {/* JOB STATUS CHART */}
           <Card className="shadow-xl border-none ring-1 ring-slate-200">
             <CardHeader className="border-b bg-slate-50/50 py-3">
-              <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500">
-                <ListChecks className="h-4 w-4" /> Stav úloh
-              </CardTitle>
+              <div className="flex flex-col gap-1">
+                <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500">
+                  <ListChecks className="h-4 w-4" /> Stav úloh
+                </CardTitle>
+                <p className="text-[10px] text-slate-400 font-medium">
+                  Prehľad počtu jobov v jednotlivých fázach.
+                </p>
+              </div>
             </CardHeader>
             <CardContent className="pt-6">
               <JobStatusChart data={jobStatusData} />
