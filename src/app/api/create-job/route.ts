@@ -9,23 +9,37 @@ export async function POST(request: Request) {
 
     const { title, deadline, campaignId, externalLink } = await request.json()
 
+    // 1. Basic Validation
     if (!title || !deadline || !campaignId) {
       return NextResponse.json({ error: 'Názov, termín a projekt sú povinné' }, { status: 400 })
     }
 
+    // 2. Date Validation
+    const dateObj = new Date(deadline)
+    if (isNaN(dateObj.getTime())) {
+      console.error("INVALID DATE:", deadline)
+      return NextResponse.json({ error: 'Neplatný formát dátumu' }, { status: 400 })
+    }
+
+    console.log("Creating JOB:", { title, deadline, campaignId, externalLink })
+
+    // 3. Create Job
     const job = await prisma.job.create({
       data: {
         title,
-        deadline: new Date(deadline),
+        deadline: dateObj,
         campaignId,
         status: 'TODO',
         externalLink: externalLink || null
       }
     })
 
+    console.log("JOB Created:", job.id)
     return NextResponse.json(job)
 
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error("CREATE JOB ERROR (500):", error)
+    // Return detailed error for debugging
+    return NextResponse.json({ error: error.message || "Server Error" }, { status: 500 })
   }
 }
