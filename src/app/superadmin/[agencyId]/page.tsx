@@ -30,6 +30,7 @@ export default function AgencyAdminDetail({ params }: { params: { agencyId: stri
     const [users, setUsers] = useState<User[]>([])
     const [loading, setLoading] = useState(true)
     const [impersonating, setImpersonating] = useState(false)
+    const [impersonateOpen, setImpersonateOpen] = useState(false)
 
     // Trial Extension State
     const [extendOpen, setExtendOpen] = useState(false)
@@ -55,7 +56,6 @@ export default function AgencyAdminDetail({ params }: { params: { agencyId: stri
     useEffect(() => { fetchData() }, [params.agencyId])
 
     const handleImpersonate = async () => {
-        if (!confirm("Chcete sa prihlásiť do tejto agentúry ako GOD MODE?")) return
         setImpersonating(true)
         try {
             const res = await fetch('/api/auth/impersonate', {
@@ -67,9 +67,12 @@ export default function AgencyAdminDetail({ params }: { params: { agencyId: stri
                 const data = await res.json()
                 document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Strict`
                 window.location.href = `/${data.slug}`
+            } else {
+                const err = await res.json()
+                alert(err.error || "Chyba pri vstupe")
             }
-        } catch (e) { alert("Chyba") }
-        finally { setImpersonating(false) }
+        } catch (e) { alert("Chyba spojenia") }
+        finally { setImpersonating(false); setImpersonateOpen(false) }
     }
 
     const handleExtendTrial = async () => {
@@ -145,13 +148,32 @@ export default function AgencyAdminDetail({ params }: { params: { agencyId: stri
                             Predĺžiť Trial
                         </Button>
 
-                        <Button onClick={handleImpersonate} disabled={impersonating} className="bg-red-600 hover:bg-red-700 text-white font-bold h-12 px-6 shadow-xl">
+                        <Button onClick={() => setImpersonateOpen(true)} disabled={impersonating} className="bg-red-600 hover:bg-red-700 text-white font-bold h-12 px-6 shadow-xl">
                             {impersonating ? <Loader2 className="animate-spin mr-2" /> : <LogIn className="h-4 w-4 mr-2" />}
                             GOD MODE
                         </Button>
                     </div>
                 </div>
             </div>
+
+            <Dialog open={impersonateOpen} onOpenChange={setImpersonateOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-red-600 flex items-center gap-2 uppercase font-black italic">
+                            <ShieldCheck className="h-6 w-6" /> Aktivovať God Mode?
+                        </DialogTitle>
+                        <DialogDescription className="font-medium text-slate-600">
+                            Chystáte sa prihlásiť do agentúry <strong>{agency?.name}</strong> s plnými právami Superadmina. Budete vidieť všetko tak, ako keby ste boli členom tímu, ale s "Božskými" právomocami.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setImpersonateOpen(false)} disabled={impersonating}>Zrušiť</Button>
+                        <Button onClick={handleImpersonate} disabled={impersonating} className="bg-red-600 hover:bg-red-700 text-white font-bold">
+                            {impersonating ? <Loader2 className="animate-spin mr-2" /> : "Vstúpiť ako Boh"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Card className="shadow-lg border-none ring-1 ring-slate-200">
                 <CardHeader className="bg-slate-50 border-b py-4"><CardTitle className="text-sm font-bold uppercase tracking-widest text-slate-500">Užívatelia v tejto agentúre</CardTitle></CardHeader>

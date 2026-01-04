@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   // 1. Overenie Superadmina
   const session = await getSession() // ✅ must await
   if (!session || session.role !== 'SUPERADMIN') {
-      return NextResponse.json({ error: 'Prístup zamietnutý' }, { status: 403 })
+    return NextResponse.json({ error: 'Prístup zamietnutý' }, { status: 403 })
   }
 
   try {
@@ -19,10 +19,10 @@ export async function POST(request: Request) {
     if (!agencyId) return NextResponse.json({ error: 'Chýba ID agentúry' }, { status: 400 })
 
     // 2. Nájdeme agentúru, aby sme získali jej SLUG
-    const targetAgency = await prisma.agency.findUnique({ 
-        where: { id: agencyId } 
+    const targetAgency = await prisma.agency.findUnique({
+      where: { id: agencyId }
     })
-    
+
     if (!targetAgency) return NextResponse.json({ error: 'Agentúra neexistuje' }, { status: 404 })
 
     // 3. Vygenerujeme GOD MODE Token
@@ -30,16 +30,17 @@ export async function POST(request: Request) {
       {
         userId: session.userId,
         role: 'SUPERADMIN',
-        agencyId: targetAgency.id
+        agencyId: targetAgency.id,
+        slug: targetAgency.slug
       },
       JWT_SECRET,
       { expiresIn: '2h' }
     )
 
     // 4. Vrátime token a slug
-    return NextResponse.json({ 
-        token, 
-        slug: targetAgency.slug
+    return NextResponse.json({
+      token,
+      slug: targetAgency.slug
     })
 
   } catch (error: any) {
