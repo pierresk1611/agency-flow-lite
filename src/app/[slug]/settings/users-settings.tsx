@@ -11,18 +11,42 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { Loader2, Plus, UserPlus, KeyRound } from "lucide-react"
 
-// Preddefinované oddelenia (z tvojho zoznamu) + Ostatné
-const DEPARTMENTS = [
-    "Management",
-    "Client Service / Account",
-    "Strategy / Planning",
-    "Creative",
-    "Digital / Performance",
-    "Production / Delivery",
-    "Tech / Development",
-    "Podporné oddelenia", // HR, Finance, atď.
-    "Ostatné"
-]
+// Preddefinované oddelenia a pozície (podľa požiadavky)
+const STANDARD_POSITIONS: Record<string, string[]> = {
+    "Vedenie agentúry (Management)": [
+        "Managing Director / CEO", "Executive Director", "Operations Director", "Finance Director / CFO"
+    ],
+    "Client Service / Account": [
+        "Account Executive / Junior Account", "Account Manager", "Senior Account Manager",
+        "Account Director", "Group Account Director", "Traffic Manager"
+    ],
+    "Strategy / Planning": [
+        "Strategic Planner", "Digital Strategist", "Media Strategist", "Brand Strategist"
+    ],
+    "Creative": [
+        "Creative Director (CD)", "Associate Creative Director (ACD)", "Art Director (AD)",
+        "Copywriter", "Senior / Junior Copywriter", "Graphic Designer / Visual Designer",
+        "Motion Designer", "Content Creator"
+    ],
+    "Digital / Performance / Media": [
+        "PPC Specialist", "Performance Marketing Manager", "Media Buyer", "SEO Specialist",
+        "Social Media Manager", "Community Manager", "CRM / Marketing Automation Specialist",
+        "Data / Analytics Specialist"
+    ],
+    "Production / Delivery": [
+        "Producer", "Digital Producer", "Project Manager", "Traffic Manager"
+    ],
+    "Tech / Development": [
+        "Frontend Developer", "Backend Developer", "Full-stack Developer", "UX Designer",
+        "UI Designer", "UX Researcher", "QA / Tester", "Tech Lead"
+    ],
+    "Podporné oddelenia": [
+        "HR Manager / People Partner", "Office Manager", "Finance / Accounting",
+        "Legal / Compliance", "IT Support"
+    ]
+}
+
+const DEPARTMENTS = Object.keys(STANDARD_POSITIONS).concat("Ostatné")
 
 const ROLES = [
     { value: 'CREATIVE', label: 'Creative (Základný prístup)' },
@@ -45,7 +69,7 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
     const [newRole, setNewRole] = useState('CREATIVE')
 
     // Position Logic
-    const [selectedDept, setSelectedDept] = useState(DEPARTMENTS[0])
+    const [selectedDept, setSelectedDept] = useState(DEPARTMENTS[1]) // Default Client Service
     const [selectedPosition, setSelectedPosition] = useState('') // Name of position
     const [isCustomPosition, setIsCustomPosition] = useState(false)
     const [customPositionName, setCustomPositionName] = useState('')
@@ -54,14 +78,22 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
     const [resetUserId, setResetUserId] = useState<string | null>(null)
     const [resetPassword, setResetPassword] = useState('')
 
-    // Filtrovanie pozícií podľa vybraného oddelenia
-    const availablePositions = positions.filter(p => p.category === selectedDept)
+    // MERGE POSITIONS: DB pozície + Standard pozície (bez duplikátov)
+    const dbPositionsForDept = positions.filter((p: any) => p.category === selectedDept).map((p: any) => p.name)
+    const standardPositionsForDept = STANDARD_POSITIONS[selectedDept] || []
+
+    // Vytvoríme set unikátnych pozícii
+    const availablePositionNames = Array.from(new Set([...dbPositionsForDept, ...standardPositionsForDept])).sort()
 
     const handleCreateUser = async () => {
         if (!newUserEmail || !newUserPassword || !newName) return alert("Vyplňte všetky povinné polia.")
 
         const finalPositionName = isCustomPosition ? customPositionName : selectedPosition
         if (!finalPositionName) return alert("Vyberte alebo zadajte pozíciu.")
+
+        // Logic: Ak vyberie štandardnú pozíciu, ktorá ešte nie je v DB (positions), musíme ju vytvoriť (isNewPosition = true)
+        const existsInDb = positions.some((p: any) => p.name === finalPositionName && p.category === selectedDept)
+        const shouldCreatePosition = isCustomPosition || !existsInDb
 
         setLoading(true)
         try {
@@ -75,7 +107,7 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
                     role: newRole,
                     department: selectedDept,
                     positionName: finalPositionName,
-                    isNewPosition: isCustomPosition
+                    isNewPosition: shouldCreatePosition
                 })
             })
 
@@ -85,7 +117,7 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
             alert("Užívateľ vytvorený!")
             setIsAddUserOpen(false)
             // Reset form
-            setNewUserEmail(''); setNewUserPassword(''); setNewName(''); setCustomPositionName(''); setIsCustomPosition(false);
+            setNewUserEmail(''); setNewUserPassword(''); setNewName(''); setCustomPositionName(''); setIsCustomPosition(false); setSelectedPosition('');
             router.refresh()
         } catch (error: any) {
             alert(error.message)
@@ -114,12 +146,15 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
     }
 
     // ================= RENDER LOGIC =================
-    // Group users by department (category from positions table needs to be linked or we infer it?)
-    // Problém: User model má len "position" string. Nemá priamu linku na category.
-    // Riešenie: Musíme namapovať user.position -> position.category
 
     const getCategoryForUser = (userPos: string) => {
-        const found = positions.find(p => p.name === userPos)
+        const found = positions.find((p: any) => p.name === userPos)
+        // Fallback: Check if it matches a standard position
+        if (!found) {
+            for (const [dept, positionsList] of Object.entries(STANDARD_POSITIONS)) {
+                if (positionsList.includes(userPos)) return dept
+            }
+        }
         return found?.category || "Ostatné"
     }
 
@@ -130,7 +165,6 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
         const cat = getCategoryForUser(u.position || '')
         if (groupedUsers.has(cat)) groupedUsers.get(cat)?.push(u)
         else {
-            // Fallback ak kategória nesedí
             if (!groupedUsers.has("Ostatné")) groupedUsers.set("Ostatné", [])
             groupedUsers.get("Ostatné")?.push(u)
         }
@@ -166,7 +200,7 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
 
                             <div className="grid gap-2">
                                 <Label>Oddelenie</Label>
-                                <Select value={selectedDept} onValueChange={setSelectedDept}>
+                                <Select value={selectedDept} onValueChange={val => { setSelectedDept(val); setSelectedPosition(''); }}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>{DEPARTMENTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
                                 </Select>
@@ -179,7 +213,7 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
                                         <Select value={selectedPosition} onValueChange={setSelectedPosition}>
                                             <SelectTrigger className="w-full"><SelectValue placeholder="Vyberte pozíciu" /></SelectTrigger>
                                             <SelectContent>
-                                                {availablePositions.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
+                                                {availablePositionNames.map(pName => <SelectItem key={pName} value={pName}>{pName}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                         <Button variant="outline" onClick={() => setIsCustomPosition(true)}><Plus className="h-4 w-4" /></Button>
@@ -201,7 +235,6 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {Array.from(groupedUsers.entries()).map(([dept, users]) => {
-                    // Skip empty departments unless we want to show placeholders
                     if (users.length === 0) return null
 
                     return (
