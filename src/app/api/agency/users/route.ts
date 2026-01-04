@@ -46,7 +46,21 @@ export async function GET(request: Request) {
       }
     })
 
-    return NextResponse.json(users)
+    // Dotiahnutie pozícií pre určenie oddelenia (Department)
+    const positions = await prisma.agencyPosition.findMany({
+      where: { agencyId: session.agencyId }
+    })
+
+    // Map function
+    const usersWithDept = users.map(u => {
+      const pos = positions.find(p => p.name === u.position)
+      return {
+        ...u,
+        department: pos?.category || 'Ostatné'
+      }
+    })
+
+    return NextResponse.json(usersWithDept)
   } catch (error: any) {
     console.error("GET USERS ERROR:", error)
     return NextResponse.json({ error: 'Chyba pri načítaní dát: ' + error.message }, { status: 500 })

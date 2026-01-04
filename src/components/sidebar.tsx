@@ -42,6 +42,12 @@ export function Sidebar({ slug, role }: { slug: string; role: string }) {
     else routes.push(financialsRoute)
   }
 
+  // Settings - only for ADMIN and SUPERADMIN
+  const showSettings = ['ADMIN', 'SUPERADMIN'].includes(role)
+  if (showSettings) {
+    routes.push({ label: 'Nastavenia', icon: require('lucide-react').Settings, href: `/${slug}/settings`, color: 'text-slate-400' })
+  }
+
   return (
     <div className="space-y-4 py-4 flex flex-col h-full bg-slate-900 text-white border-r border-white/10 shadow-xl">
       <div className="px-3 py-2 flex-1">
