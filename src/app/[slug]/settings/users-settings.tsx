@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import { Loader2, Plus, UserPlus, KeyRound } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog"
+import { Loader2, Plus, UserPlus, KeyRound, Pencil, Trash2 } from "lucide-react"
 
 // Preddefinované oddelenia a pozície (podľa požiadavky)
 const STANDARD_POSITIONS: Record<string, string[]> = {
@@ -68,30 +68,53 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
     const [newName, setNewName] = useState('')
     const [newRole, setNewRole] = useState('CREATIVE')
 
-    // Position Logic
+    // Position Logic (Add)
     const [selectedDept, setSelectedDept] = useState(DEPARTMENTS[1]) // Default Client Service
-    const [selectedPosition, setSelectedPosition] = useState('') // Name of position
+    const [selectedPosition, setSelectedPosition] = useState('')
     const [isCustomPosition, setIsCustomPosition] = useState(false)
     const [customPositionName, setCustomPositionName] = useState('')
+
+    // ================= STATE PRE EDIT USER DIALOG =================
+    const [editingUser, setEditingUser] = useState<any>(null)
+    const [editName, setEditName] = useState('')
+    const [editEmail, setEditEmail] = useState('')
+    const [editRole, setEditRole] = useState('')
+
+    // Position Logic (Edit)
+    const [editDept, setEditDept] = useState('')
+    const [editPosition, setEditPosition] = useState('')
+    const [isEditCustomPosition, setIsEditCustomPosition] = useState(false)
+    const [editCustomPositionName, setEditCustomPositionName] = useState('')
+
+    // ================= STATE PRE DELETE =================
+    const [deletingUser, setDeletingUser] = useState<any>(null)
 
     // ================= STATE PRE PASSWORD RESET =================
     const [resetUserId, setResetUserId] = useState<string | null>(null)
     const [resetPassword, setResetPassword] = useState('')
 
-    // MERGE POSITIONS: DB pozície + Standard pozície (bez duplikátov)
-    const dbPositionsForDept = positions.filter((p: any) => p.category === selectedDept).map((p: any) => p.name)
-    const standardPositionsForDept = STANDARD_POSITIONS[selectedDept] || []
+    // --- HELPERS ---
+    const getAvailablePositionsForDept = (dept: string) => {
+        const dbPositions = positions.filter((p: any) => p.category === dept).map((p: any) => p.name)
+        const stdPositions = STANDARD_POSITIONS[dept] || []
+        return Array.from(new Set([...dbPositions, ...stdPositions])).sort()
+    }
 
-    // Vytvoríme set unikátnych pozícii
-    const availablePositionNames = Array.from(new Set([...dbPositionsForDept, ...standardPositionsForDept])).sort()
+    // Add User Dropdown Options
+    const addPositionOptions = getAvailablePositionsForDept(selectedDept)
+
+    // Edit User Dropdown Options
+    const editPositionOptions = getAvailablePositionsForDept(editDept)
+
+
+    // --- HANDLERS ---
 
     const handleCreateUser = async () => {
         if (!newUserEmail || !newUserPassword || !newName) return alert("Vyplňte všetky povinné polia.")
-
         const finalPositionName = isCustomPosition ? customPositionName : selectedPosition
         if (!finalPositionName) return alert("Vyberte alebo zadajte pozíciu.")
 
-        // Logic: Ak vyberie štandardnú pozíciu, ktorá ešte nie je v DB (positions), musíme ju vytvoriť (isNewPosition = true)
+        // Logic: Create position if entirely new
         const existsInDb = positions.some((p: any) => p.name === finalPositionName && p.category === selectedDept)
         const shouldCreatePosition = isCustomPosition || !existsInDb
 
@@ -116,40 +139,87 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
 
             alert("Užívateľ vytvorený!")
             setIsAddUserOpen(false)
-            // Reset form
             setNewUserEmail(''); setNewUserPassword(''); setNewName(''); setCustomPositionName(''); setIsCustomPosition(false); setSelectedPosition('');
             router.refresh()
-        } catch (error: any) {
-            alert(error.message)
-        } finally {
-            setLoading(false)
-        }
+        } catch (error: any) { alert(error.message) } finally { setLoading(false) }
     }
 
-    const handleResetPassword = async () => {
-        if (!resetPassword) return
+    const openEditDialog = (user: any, currentCategory: string) => {
+        setEditingUser(user)
+        setEditName(user.name || '')
+        setEditEmail(user.email || '')
+        setEditRole(user.role)
+        setEditDept(currentCategory)
+        setEditPosition(user.position || '')
+        setIsEditCustomPosition(false)
+        setEditCustomPositionName('')
+    }
+
+    const handleUpdateUser = async () => {
+        if (!editName || !editEmail) return alert("Vyplňte povinné polia.")
+        const finalPositionName = isEditCustomPosition ? editCustomPositionName : editPosition
+        if (!finalPositionName) return alert("Vyberte alebo zadajte pozíciu.")
+
+        const existsInDb = positions.some((p: any) => p.name === finalPositionName && p.category === editDept)
+        const shouldCreatePosition = isEditCustomPosition || !existsInDb
+
         setLoading(true)
         try {
             const res = await fetch('/api/settings/users', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'RESET_PASSWORD',
-                    userId: resetUserId,
-                    newPassword: resetPassword
+                    action: 'UPDATE_DETAILS',
+                    userId: editingUser.id,
+                    name: editName,
+                    email: editEmail,
+                    role: editRole,
+                    department: editDept,
+                    positionName: finalPositionName,
+                    isNewPosition: shouldCreatePosition
                 })
             })
-            if (!res.ok) throw new Error("Chyba pri zmene hesla")
+            if (!res.ok) throw new Error("Chyba pri úprave")
+
+            setEditingUser(null)
+            router.refresh()
+        } catch (e: any) { alert(e.message) } finally { setLoading(false) }
+    }
+
+    const handleDeleteUser = async () => {
+        if (!deletingUser) return
+        setLoading(true)
+        try {
+            const res = await fetch('/api/settings/users', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: deletingUser.id })
+            })
+            if (!res.ok) throw new Error("Chyba pri mazaní")
+            setDeletingUser(null)
+            router.refresh()
+        } catch (e) { alert("Chyba.") } finally { setLoading(false) }
+    }
+
+    const handleResetPassword = async () => {
+        // ... (existing code logic)
+        if (!resetPassword) return
+        setLoading(true)
+        try {
+            const res = await fetch('/api/settings/users', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'RESET_PASSWORD', userId: resetUserId, newPassword: resetPassword })
+            })
+            if (!res.ok) throw new Error("Chyba")
             alert("Heslo zmenené.")
             setResetUserId(null); setResetPassword('');
         } catch (e) { alert("Chyba.") } finally { setLoading(false) }
     }
 
     // ================= RENDER LOGIC =================
-
     const getCategoryForUser = (userPos: string) => {
         const found = positions.find((p: any) => p.name === userPos)
-        // Fallback: Check if it matches a standard position
         if (!found) {
             for (const [dept, positionsList] of Object.entries(STANDARD_POSITIONS)) {
                 if (positionsList.includes(userPos)) return dept
@@ -181,23 +251,22 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
                     </DialogTrigger>
                     <DialogContent className="max-w-xl">
                         <DialogHeader><DialogTitle>Nový užívateľ</DialogTitle></DialogHeader>
+                        {/* ADD USER FORM */}
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2"><Label>Meno a Priezvisko</Label><Input value={newName} onChange={e => setNewName(e.target.value)} /></div>
-                                <div className="grid gap-2"><Label>Email (Login)</Label><Input value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} /></div>
+                                <div className="grid gap-2"><Label>Email</Label><Input value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} /></div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2"><Label>Heslo</Label><Input value={newUserPassword} onChange={e => setNewUserPassword(e.target.value)} /></div>
-                                <div className="grid gap-2"><Label>Rola (Prístupové práva)</Label>
+                                <div className="grid gap-2"><Label>Rola</Label>
                                     <Select value={newRole} onValueChange={setNewRole}>
                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                         <SelectContent>{ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
                                     </Select>
                                 </div>
                             </div>
-
                             <hr className="my-2" />
-
                             <div className="grid gap-2">
                                 <Label>Oddelenie</Label>
                                 <Select value={selectedDept} onValueChange={val => { setSelectedDept(val); setSelectedPosition(''); }}>
@@ -205,7 +274,6 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
                                     <SelectContent>{DEPARTMENTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
                                 </Select>
                             </div>
-
                             <div className="grid gap-2">
                                 <Label>Pozícia</Label>
                                 {!isCustomPosition ? (
@@ -213,14 +281,14 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
                                         <Select value={selectedPosition} onValueChange={setSelectedPosition}>
                                             <SelectTrigger className="w-full"><SelectValue placeholder="Vyberte pozíciu" /></SelectTrigger>
                                             <SelectContent>
-                                                {availablePositionNames.map(pName => <SelectItem key={pName} value={pName}>{pName}</SelectItem>)}
+                                                {addPositionOptions.map(pName => <SelectItem key={pName} value={pName}>{pName}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                         <Button variant="outline" onClick={() => setIsCustomPosition(true)}><Plus className="h-4 w-4" /></Button>
                                     </div>
                                 ) : (
                                     <div className="flex gap-2">
-                                        <Input placeholder="Názov novej pozície (napr. Senior Copywriter)" value={customPositionName} onChange={e => setCustomPositionName(e.target.value)} />
+                                        <Input placeholder="Názov novej pozície" value={customPositionName} onChange={e => setCustomPositionName(e.target.value)} />
                                         <Button variant="ghost" onClick={() => setIsCustomPosition(false)}>Zrušiť</Button>
                                     </div>
                                 )}
@@ -236,7 +304,6 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {Array.from(groupedUsers.entries()).map(([dept, users]) => {
                     if (users.length === 0) return null
-
                     return (
                         <Card key={dept} className="bg-slate-50/50">
                             <CardHeader className="py-3 border-b bg-white">
@@ -247,7 +314,7 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
                             <CardContent className="p-0">
                                 <div className="divide-y divide-slate-100">
                                     {users.map(u => (
-                                        <div key={u.id} className="p-3 flex items-center justify-between bg-white hover:bg-slate-50 transition">
+                                        <div key={u.id} className="p-3 flex items-center justify-between bg-white hover:bg-slate-50 transition group">
                                             <div>
                                                 <p className="font-bold text-sm text-slate-800">{u.name}</p>
                                                 <div className="flex gap-2 text-xs text-slate-500">
@@ -258,9 +325,18 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
                                                     <span className="uppercase text-[10px] font-black bg-slate-100 px-1 rounded">{u.role}</span>
                                                 </div>
                                             </div>
-                                            <Button variant="ghost" size="sm" onClick={() => setResetUserId(u.id)}>
-                                                <KeyRound className="h-4 w-4 text-slate-400 hover:text-blue-500" />
-                                            </Button>
+
+                                            <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(u, dept)} title="Upraviť detaily">
+                                                    <Pencil className="h-4 w-4 text-slate-400 hover:text-blue-500" />
+                                                </Button>
+                                                <Button variant="ghost" size="sm" onClick={() => setResetUserId(u.id)} title="Zmeniť heslo">
+                                                    <KeyRound className="h-4 w-4 text-slate-400 hover:text-amber-500" />
+                                                </Button>
+                                                <Button variant="ghost" size="sm" onClick={() => setDeletingUser(u)} title="Odstrániť (Deaktivovať)">
+                                                    <Trash2 className="h-4 w-4 text-slate-400 hover:text-red-500" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -269,6 +345,74 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
                     )
                 })}
             </div>
+
+            {/* EDIT USER DIALOG */}
+            <Dialog open={!!editingUser} onOpenChange={(o) => !o && setEditingUser(null)}>
+                <DialogContent className="max-w-xl">
+                    <DialogHeader><DialogTitle>Upraviť užívateľa</DialogTitle></DialogHeader>
+                    {editingUser && (
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2"><Label>Meno</Label><Input value={editName} onChange={e => setEditName(e.target.value)} /></div>
+                                <div className="grid gap-2"><Label>Email</Label><Input value={editEmail} onChange={e => setEditEmail(e.target.value)} /></div>
+                            </div>
+                            <div className="grid gap-2"><Label>Rola</Label>
+                                <Select value={editRole} onValueChange={setEditRole}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>{ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
+                                </Select>
+                            </div>
+                            <hr className="my-2" />
+                            <div className="grid gap-2">
+                                <Label>Oddelenie</Label>
+                                <Select value={editDept} onValueChange={val => { setEditDept(val); setEditPosition(''); }}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>{DEPARTMENTS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label>Pozícia</Label>
+                                {!isEditCustomPosition ? (
+                                    <div className="flex gap-2">
+                                        <Select value={editPosition} onValueChange={setEditPosition}>
+                                            <SelectTrigger className="w-full"><SelectValue placeholder="Vyberte pozíciu" /></SelectTrigger>
+                                            <SelectContent>
+                                                {editPositionOptions.map(pName => <SelectItem key={pName} value={pName}>{pName}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <Button variant="outline" onClick={() => setIsEditCustomPosition(true)}><Plus className="h-4 w-4" /></Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <Input placeholder="Názov novej pozície" value={editCustomPositionName} onChange={e => setEditCustomPositionName(e.target.value)} />
+                                        <Button variant="ghost" onClick={() => setIsEditCustomPosition(false)}>Zrušiť</Button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button onClick={handleUpdateUser} disabled={loading}>Uložiť zmeny</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* DELETE CONFIRM DIALOG */}
+            <Dialog open={!!deletingUser} onOpenChange={(o) => !o && setDeletingUser(null)}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Odstrániť užívateľa?</DialogTitle></DialogHeader>
+                    <DialogDescription>
+                        Naozaj chcete deaktivovať užívateľa <b>{deletingUser?.name}</b>?
+                        Užívateľ sa nebude môcť prihlásiť, ale jeho história ostane zachovaná.
+                    </DialogDescription>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeletingUser(null)}>Zrušiť</Button>
+                        <Button variant="destructive" onClick={handleDeleteUser} disabled={loading}>
+                            {loading ? <Loader2 className="animate-spin h-4 w-4" /> : "Odstrániť"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* RESET PASSWORD DIALOG */}
             <Dialog open={!!resetUserId} onOpenChange={(o) => !o && setResetUserId(null)}>
