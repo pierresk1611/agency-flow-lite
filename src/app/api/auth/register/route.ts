@@ -1,16 +1,7 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { sendDynamicEmail } from '@/lib/email'
-
-// FORCE LOCAL CONNECTION
-const prisma = new PrismaClient({
-    datasources: {
-        db: {
-            url: "postgresql://neondb_owner:npg_Aw56YZHlVUhO@ep-calm-violet-aggutujf-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
-        },
-    },
-})
 
 // Vlastná implementácia generovania slugu
 // Keďže nemôžeme inštalovať nové npm balíky, použijeme jednoduchú funkciu
