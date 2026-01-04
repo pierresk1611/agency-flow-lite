@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, CheckSquare, Clock, Users, LogOut, Briefcase, ArrowRightLeft } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Clock, Users, LogOut, Briefcase, ArrowRightLeft, Euro } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
@@ -31,6 +31,15 @@ export function Sidebar({ slug, role }: { slug: string; role: string }) {
     const trafficRoute = { label: 'Traffic', icon: ArrowRightLeft, href: `/${slug}/traffic`, color: 'text-emerald-500' }
     if (idx >= 0) routes.splice(idx, 0, trafficRoute)
     else routes.push(trafficRoute)
+  }
+
+  // Financials - only for ADMIN, ACCOUNT, and SUPERADMIN
+  const showFinancials = ['ADMIN', 'ACCOUNT', 'SUPERADMIN'].includes(role)
+  if (showFinancials) {
+    const idx = routes.findIndex(r => r.label === 'Timesheety')
+    const financialsRoute = { label: 'Financie', icon: Euro, href: `/${slug}/financials`, color: 'text-green-500' }
+    if (idx >= 0) routes.splice(idx, 0, financialsRoute)
+    else routes.push(financialsRoute)
   }
 
   return (
