@@ -227,6 +227,7 @@ model PlannerEntry {
   minutes   Int      @default(60)
   title     String?
   isDone    Boolean  @default(false)
+  realMinutes Int      @default(0)
   createdAt DateTime @default(now())
 }
 
