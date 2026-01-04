@@ -257,7 +257,21 @@ export default async function DashboardPage({ params }: { params: { slug: string
           <PendingApprovals timesheets={pendingTimesheetsData} slug={params.slug} />
         </div>
 
-        {/* CHARTS SECTION */}
+        {/* FINANCIAL CHART - FULL WIDTH */}
+        {!isCreative && (
+          <Card className="shadow-xl border-none ring-1 ring-slate-200">
+            <CardHeader className="border-b bg-slate-50/50 py-3">
+              <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500">
+                <BarChart3 className="h-4 w-4" /> Finančný Stav Projektov
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <BudgetChart data={budgetData} slug={params.slug} />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* CHARTS SECTION - 2 COLUMNS */}
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
           {/* WORKLOAD CHART */}
           {!isCreative && workloadData.length > 0 && (
@@ -285,34 +299,6 @@ export default async function DashboardPage({ params }: { params: { slug: string
             </CardContent>
           </Card>
         </div>
-
-        {/* FINANCIAL CHART - FULL WIDTH */}
-        {!isCreative && (
-          <Card className="shadow-xl border-none ring-1 ring-slate-200">
-            <CardHeader className="border-b bg-slate-50/50 py-3">
-              <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500">
-                <BarChart3 className="h-4 w-4" /> Finančný Stav Projektov
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <BudgetChart data={budgetData} slug={params.slug} />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* TIMESHEET STATUS */}
-        {!isCreative && (
-          <Card className="shadow-xl border-none ring-1 ring-slate-200">
-            <CardHeader className="border-b bg-slate-50/50 py-3">
-              <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500">
-                <CheckCircle2 className="h-4 w-4" /> Schvaľovanie výkazov
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <TimesheetStatusChart data={tsData} />
-            </CardContent>
-          </Card>
-        )}
       </div>
     )
   } catch (error) {

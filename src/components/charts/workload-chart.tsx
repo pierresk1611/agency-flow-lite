@@ -37,7 +37,9 @@ export function WorkloadChart({ data, slug }: { data: any[], slug: string }) {
             fontSize={11}
             fontWeight={600}
             interval={0}
-            height={40}
+            height={60}
+            angle={-45}
+            textAnchor="end"
           />
           <YAxis
             axisLine={false}
