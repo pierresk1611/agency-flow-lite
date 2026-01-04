@@ -115,6 +115,9 @@ model User {
 
   // Agency Management
   managedAgency    Agency[]              @relation("InternalAccount")
+  
+  // Vytvorené kampane
+  createdCampaigns Campaign[]            @relation("CreatedCampaigns")
 }
 
 model Client {
@@ -162,6 +165,10 @@ model Campaign {
   client      Client   @relation(fields: [clientId], references: [id])
   name        String
   description String?
+  
+  createdById String?
+  createdBy   User?   @relation("CreatedCampaigns", fields: [createdById], references: [id])
+
   jobs        Job[]
   archivedAt  DateTime?
 }
@@ -173,6 +180,7 @@ model Job {
   title       String
   status      JobStatus @default(TODO)
   deadline    DateTime
+  externalLink String?
   budget      Float?   @default(0)
   
   assignments JobAssignment[]
