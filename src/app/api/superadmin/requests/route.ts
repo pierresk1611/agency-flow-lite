@@ -1,3 +1,6 @@
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import * as jwt from 'jsonwebtoken'
 import { headers } from 'next/headers'
 import { sendDynamicEmail } from '@/lib/email'
 import { revalidatePath } from 'next/cache'
