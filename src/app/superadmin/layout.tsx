@@ -1,5 +1,6 @@
-import { prisma } from '@/lib/prisma'
 import { SuperAdminNav } from '@/components/superadmin-nav'
+
+export const dynamic = 'force-dynamic'
 
 export default async function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   // Fetch pending count directly in Server Component

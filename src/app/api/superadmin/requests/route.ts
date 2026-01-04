@@ -1,8 +1,6 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import * as jwt from 'jsonwebtoken'
 import { headers } from 'next/headers'
 import { sendDynamicEmail } from '@/lib/email'
+import { revalidatePath } from 'next/cache'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret'
 
@@ -111,6 +109,7 @@ export async function PATCH(request: Request) {
                 })
             }
 
+            revalidatePath('/superadmin', 'layout')
             return NextResponse.json({ success: true, message: 'Agentúra schválená' })
 
         } else {
@@ -130,6 +129,7 @@ export async function PATCH(request: Request) {
                 })
             }
 
+            revalidatePath('/superadmin', 'layout')
             return NextResponse.json({ success: true, message: 'Agentúra zamietnutá' })
         }
     } catch (error: any) {
