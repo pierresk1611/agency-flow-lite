@@ -34,7 +34,7 @@ export function WorkloadChart({ data, slug }: { data: any[], slug: string }) {
             dataKey="name"
             axisLine={false}
             tickLine={false}
-            fontSize={11}
+            fontSize={9}
             fontWeight={600}
             interval={0}
             height={60}

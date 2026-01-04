@@ -277,9 +277,14 @@ export default async function DashboardPage({ params }: { params: { slug: string
           {!isCreative && workloadData.length > 0 && (
             <Card className="shadow-xl border-none ring-1 ring-slate-200">
               <CardHeader className="border-b bg-slate-50/50 py-3">
-                <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500">
-                  <Users className="h-4 w-4" /> Vyťaženosť tímu (7 dní)
-                </CardTitle>
+                <div className="flex flex-col gap-1">
+                  <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500">
+                    <Users className="h-4 w-4" /> Vyťaženosť tímu (7 dní)
+                  </CardTitle>
+                  <p className="text-[10px] text-slate-400 font-medium">
+                    Súčet naplánovaných hodín na najbližších 7 dní.
+                  </p>
+                </div>
               </CardHeader>
               <CardContent className="pt-6">
                 <WorkloadChart data={workloadData} slug={params.slug} />
