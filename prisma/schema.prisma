@@ -7,14 +7,288 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// --- ENUMS ---
+model Agency {
+  id                                  String           @id
+  name                                String
+  slug                                String           @unique
+  status                              AgencyStatus     @default(PENDING)
+  contactName                         String?
+  logoUrl                             String?
+  companyId                           String?
+  vatId                               String?
+  address                             String?
+  email                               String?
+  createdAt                           DateTime         @default(now())
+  trialEndsAt                         DateTime?
+  trialReminderSent                   Boolean          @default(false)
+  isSuspended                         Boolean          @default(false)
+  internalAccountId                   String?
+  User_Agency_internalAccountIdToUser User?            @relation("Agency_internalAccountIdToUser", fields: [internalAccountId], references: [id])
+  AgencyPosition                      AgencyPosition[]
+  AgencyScope                         AgencyScope[]
+  Client                              Client[]
+  Tender                              Tender[]
+  User_User_agencyIdToAgency          User[]           @relation("User_agencyIdToAgency")
+}
 
-enum Role {
-  SUPERADMIN
-  ADMIN
-  ACCOUNT
-  CREATIVE
-  TRAFFIC
+model AgencyPosition {
+  id       String  @id
+  agencyId String
+  name     String
+  category String? @default("Ostatné")
+  Agency   Agency  @relation(fields: [agencyId], references: [id])
+
+  @@unique([agencyId, name])
+}
+
+model AgencyScope {
+  id       String @id
+  agencyId String
+  name     String
+  Agency   Agency @relation(fields: [agencyId], references: [id])
+
+  @@unique([agencyId, name])
+}
+
+model BudgetItem {
+  id          String    @id
+  jobId       String
+  timesheetId String    @unique
+  hours       Float
+  rate        Float
+  amount      Float
+  createdAt   DateTime  @default(now())
+  Job         Job       @relation(fields: [jobId], references: [id])
+  Timesheet   Timesheet @relation(fields: [timesheetId], references: [id])
+}
+
+model Campaign {
+  id          String    @id
+  clientId    String
+  name        String
+  description String?
+  archivedAt  DateTime?
+  Client      Client    @relation(fields: [clientId], references: [id])
+  Job         Job[]
+}
+
+model Client {
+  id            String          @id
+  agencyId      String
+  name          String
+  priority      Int
+  scope         String?
+  archivedAt    DateTime?
+  createdAt     DateTime        @default(now())
+  Campaign      Campaign[]
+  Agency        Agency          @relation(fields: [agencyId], references: [id])
+  ClientNote    ClientNote[]
+  ContactPerson ContactPerson[]
+  File          File[]
+
+  @@unique([agencyId, name])
+}
+
+model ClientNote {
+  id        String   @id
+  clientId  String
+  userId    String
+  text      String
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  Client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id])
+}
+
+model Comment {
+  id              String         @id
+  jobId           String?
+  jobAssignmentId String?
+  tenderId        String?
+  userId          String
+  text            String
+  createdAt       DateTime       @default(now())
+  JobAssignment   JobAssignment? @relation(fields: [jobAssignmentId], references: [id])
+  Job             Job?           @relation(fields: [jobId], references: [id])
+  Tender          Tender?        @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  User            User           @relation(fields: [userId], references: [id])
+}
+
+model ContactPerson {
+  id       String  @id
+  clientId String
+  name     String
+  email    String?
+  phone    String?
+  position String?
+  Client   Client  @relation(fields: [clientId], references: [id])
+}
+
+model EmailTemplate {
+  id          String   @id
+  slug        String   @unique
+  name        String
+  subject     String
+  body        String
+  description String?
+  updatedAt   DateTime
+}
+
+model File {
+  id         String   @id
+  name       String?  @default("")
+  jobId      String?
+  clientId   String?
+  tenderId   String?
+  uploadedBy String
+  fileUrl    String
+  fileType   String
+  createdAt  DateTime @default(now())
+  Client     Client?  @relation(fields: [clientId], references: [id])
+  Job        Job?     @relation(fields: [jobId], references: [id])
+  Tender     Tender?  @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+}
+
+model Job {
+  id            String          @id
+  campaignId    String
+  title         String
+  status        JobStatus       @default(TODO)
+  deadline      DateTime
+  budget        Float?          @default(0)
+  archivedAt    DateTime?
+  createdAt     DateTime        @default(now())
+  BudgetItem    BudgetItem[]
+  Comment       Comment[]
+  File          File[]
+  Campaign      Campaign        @relation(fields: [campaignId], references: [id])
+  JobAssignment JobAssignment[]
+  PlannerEntry  PlannerEntry[]
+}
+
+model JobAssignment {
+  id                  String                @id
+  jobId               String
+  userId              String
+  roleOnJob           String
+  Comment             Comment[]
+  Job                 Job                   @relation(fields: [jobId], references: [id])
+  User                User                  @relation(fields: [userId], references: [id])
+  ReassignmentRequest ReassignmentRequest[]
+  TenderAssignment    TenderAssignment[]
+  Timesheet           Timesheet[]
+}
+
+model Notification {
+  id        String   @id
+  userId    String
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id])
+}
+
+model PlannerEntry {
+  id          String   @id
+  userId      String
+  jobId       String?
+  date        DateTime
+  minutes     Int      @default(60)
+  title       String?
+  isDone      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  realMinutes Int      @default(0)
+  Job         Job?     @relation(fields: [jobId], references: [id])
+  User        User     @relation(fields: [userId], references: [id])
+}
+
+model ReassignmentRequest {
+  id                                             String        @id
+  assignmentId                                   String
+  requestByUserId                                String
+  targetUserId                                   String
+  reason                                         String
+  status                                         String        @default("PENDING")
+  createdAt                                      DateTime      @default(now())
+  JobAssignment                                  JobAssignment @relation(fields: [assignmentId], references: [id])
+  User_ReassignmentRequest_requestByUserIdToUser User          @relation("ReassignmentRequest_requestByUserIdToUser", fields: [requestByUserId], references: [id])
+  User_ReassignmentRequest_targetUserIdToUser    User          @relation("ReassignmentRequest_targetUserIdToUser", fields: [targetUserId], references: [id])
+}
+
+model Tender {
+  id               String             @id
+  agencyId         String
+  title            String
+  description      String?
+  status           JobStatus          @default(TODO)
+  deadline         DateTime
+  budget           Float?             @default(0)
+  isConverted      Boolean            @default(false)
+  createdAt        DateTime           @default(now())
+  Comment          Comment[]
+  File             File[]
+  Agency           Agency             @relation(fields: [agencyId], references: [id])
+  TenderAssignment TenderAssignment[]
+}
+
+model TenderAssignment {
+  id              String         @id
+  tenderId        String
+  userId          String
+  roleOnJob       String
+  jobAssignmentId String?
+  JobAssignment   JobAssignment? @relation(fields: [jobAssignmentId], references: [id])
+  Tender          Tender         @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  User            User           @relation(fields: [userId], references: [id])
+}
+
+model Timesheet {
+  id                 String          @id
+  jobAssignmentId    String
+  startTime          DateTime
+  endTime            DateTime?
+  durationMinutes    Int?
+  description        String?
+  status             TimesheetStatus @default(PENDING)
+  approvedBy         String?
+  approvedAt         DateTime?
+  isPaused           Boolean         @default(false)
+  lastPauseStart     DateTime?
+  totalPausedMinutes Int             @default(0)
+  isUrgent           Boolean         @default(false)
+  BudgetItem         BudgetItem?
+  JobAssignment      JobAssignment   @relation(fields: [jobAssignmentId], references: [id])
+}
+
+model User {
+  id                                                            String                @id
+  agencyId                                                      String?
+  role                                                          Role
+  name                                                          String?
+  position                                                      String?
+  email                                                         String                @unique
+  passwordHash                                                  String
+  hourlyRate                                                    Float?                @default(0)
+  costRate                                                      Float?                @default(0)
+  active                                                        Boolean               @default(true)
+  Agency_Agency_internalAccountIdToUser                         Agency[]              @relation("Agency_internalAccountIdToUser")
+  ClientNote                                                    ClientNote[]
+  Comment                                                       Comment[]
+  JobAssignment                                                 JobAssignment[]
+  Notification                                                  Notification[]
+  PlannerEntry                                                  PlannerEntry[]
+  ReassignmentRequest_ReassignmentRequest_requestByUserIdToUser ReassignmentRequest[] @relation("ReassignmentRequest_requestByUserIdToUser")
+  ReassignmentRequest_ReassignmentRequest_targetUserIdToUser    ReassignmentRequest[] @relation("ReassignmentRequest_targetUserIdToUser")
+  TenderAssignment                                              TenderAssignment[]
+  Agency_User_agencyIdToAgency                                  Agency?               @relation("User_agencyIdToAgency", fields: [agencyId], references: [id])
+}
+
+enum AgencyStatus {
+  PENDING
+  ACTIVE
+  REJECTED
 }
 
 enum JobStatus {
@@ -24,333 +298,16 @@ enum JobStatus {
   TENDER
 }
 
+enum Role {
+  SUPERADMIN
+  ADMIN
+  ACCOUNT
+  CREATIVE
+  TRAFFIC
+}
+
 enum TimesheetStatus {
   PENDING
   APPROVED
   REJECTED
-}
-
-enum AgencyStatus {
-  PENDING
-  ACTIVE
-  REJECTED
-}
-
-// --- MODELS ---
-
-model Agency {
-  id         String   @id @default(uuid())
-  name       String
-  slug       String   @unique 
-  status     AgencyStatus @default(PENDING)
-  contactName String?
-  logoUrl    String?
-  
-  // Fakturačné údaje
-  companyId  String?  // IČO
-  vatId      String?  // DIČ / IČ DPH
-  address    String?  
-  email      String?  
-  
-  users      User[]
-  clients    Client[]
-  scopes     AgencyScope[]
-  positions  AgencyPosition[]
-  tenders    Tender[]
-  createdAt  DateTime @default(now())
-
-  // Trial & Status
-  trialEndsAt       DateTime?
-  trialReminderSent Boolean  @default(false)
-  isSuspended       Boolean  @default(false)
-  
-  // Nastavenia schvaľovania
-  internalAccountId String?
-  internalAccount   User?   @relation("InternalAccount", fields: [internalAccountId], references: [id])
-}
-
-model AgencyScope {
-  id        String   @id @default(uuid())
-  agencyId  String
-  agency    Agency   @relation(fields: [agencyId], references: [id])
-  name      String   
-  @@unique([agencyId, name])
-}
-
-model AgencyPosition {
-  id        String   @id @default(uuid())
-  agencyId  String
-  agency    Agency   @relation(fields: [agencyId], references: [id])
-  name      String   
-  category  String?  @default("Ostatné")
-  @@unique([agencyId, name])
-}
-
-model User {
-  id           String   @id @default(uuid())
-  agencyId     String?
-  agency       Agency?  @relation(fields: [agencyId], references: [id])
-  role         Role
-  name         String?
-  position     String?
-  email        String   @unique
-  passwordHash String
-  
-  // Sadzby
-  hourlyRate   Float?   @default(0) 
-  costRate     Float?   @default(0) 
-  active       Boolean  @default(true)
-  
-  // Vzťahy
-  assignments      JobAssignment[]
-  comments         Comment[]
-  tenderAssignments TenderAssignment[]
-  plannerEntries   PlannerEntry[]
-  notifications    Notification[]
-  clientNotes      ClientNote[]
-  
-  // Traffic žiadosti
-  requestsSent     ReassignmentRequest[] @relation("RequestBy")
-  requestsReceived ReassignmentRequest[] @relation("TargetUser")
-
-  // Agency Management
-  managedAgency    Agency[]              @relation("InternalAccount")
-}
-
-model Client {
-  id         String   @id @default(uuid())
-  agencyId   String
-  agency     Agency   @relation(fields: [agencyId], references: [id])
-  name       String
-  priority   Int 
-  scope      String?  
-  
-  contacts   ContactPerson[]
-  files      File[]
-  campaigns  Campaign[]
-  notes      ClientNote[] // Newsfeed
-  
-  archivedAt DateTime?
-  createdAt  DateTime @default(now())
-  @@unique([agencyId, name])
-}
-
-model ClientNote {
-  id        String   @id @default(uuid())
-  clientId  String
-  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  text      String
-  isPinned  Boolean  @default(false)
-  createdAt DateTime @default(now())
-}
-
-model ContactPerson {
-  id        String  @id @default(uuid())
-  clientId  String
-  client    Client  @relation(fields: [clientId], references: [id])
-  name      String
-  email     String?
-  phone     String?
-  position  String?
-}
-
-model Campaign {
-  id          String   @id @default(uuid())
-  clientId    String
-  client      Client   @relation(fields: [clientId], references: [id])
-  name        String
-  description String?
-  jobs        Job[]
-  archivedAt  DateTime?
-}
-
-model Job {
-  id          String   @id @default(uuid())
-  campaignId  String
-  campaign    Campaign @relation(fields: [campaignId], references: [id])
-  title       String
-  status      JobStatus @default(TODO)
-  deadline    DateTime
-  budget      Float?   @default(0)
-  
-  assignments JobAssignment[]
-  comments    Comment[]
-  files       File[]
-  budgets     BudgetItem[]
-  plannerEntries PlannerEntry[]
-  
-  archivedAt  DateTime?
-  createdAt   DateTime @default(now())
-}
-
-model JobAssignment {
-  id          String   @id @default(uuid())
-  jobId       String
-  job         Job      @relation(fields: [jobId], references: [id])
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  roleOnJob   String   
-  
-  timesheets  Timesheet[]
-  comments    Comment[] 
-  tenderAssignments TenderAssignment[]
-  reassignmentRequests ReassignmentRequest[]
-}
-
-model ReassignmentRequest {
-  id              String   @id @default(uuid())
-  assignmentId    String
-  assignment      JobAssignment @relation(fields: [assignmentId], references: [id])
-  
-  requestByUserId String
-  requestByUser   User     @relation("RequestBy", fields: [requestByUserId], references: [id])
-  
-  targetUserId    String
-  targetUser      User     @relation("TargetUser", fields: [targetUserId], references: [id])
-  
-  reason          String
-  status          String   @default("PENDING")
-  createdAt       DateTime @default(now())
-}
-
-model PlannerEntry {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  
-  jobId     String?  // Voliteľné pre internú prácu
-  job       Job?     @relation(fields: [jobId], references: [id])
-  
-  date      DateTime
-  minutes   Int      @default(60)
-  realMinutes Int    @default(0)
-  title     String?
-  isDone    Boolean  @default(false)
-  createdAt DateTime @default(now())
-}
-
-model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  title     String
-  message   String
-  link      String?
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-}
-
-model Timesheet {
-  id              String          @id @default(uuid())
-  jobAssignmentId String
-  jobAssignment   JobAssignment   @relation(fields: [jobAssignmentId], references: [id])
-  startTime       DateTime
-  endTime         DateTime?       
-  durationMinutes Int?
-  description     String?         
-  status          TimesheetStatus @default(PENDING)
-  approvedBy      String?         
-  approvedAt      DateTime?
-  budgetItem      BudgetItem?
-  
-  // Stopky a urgencia
-  isPaused           Boolean   @default(false)
-  lastPauseStart     DateTime?
-  totalPausedMinutes Int       @default(0)
-  isUrgent           Boolean   @default(false)
-}
-
-model BudgetItem {
-  id          String   @id @default(uuid())
-  jobId       String
-  job         Job      @relation(fields: [jobId], references: [id])
-  timesheetId String   @unique 
-  timesheet   Timesheet @relation(fields: [timesheetId], references: [id])
-  hours       Float
-  rate        Float
-  amount      Float    
-  createdAt   DateTime @default(now())
-}
-
-model Comment {
-  id        String   @id @default(uuid())
-  
-  // Väzba na Job
-  jobId     String?
-  job       Job?     @relation(fields: [jobId], references: [id])
-  
-  // Väzba na JobAssignment
-  jobAssignmentId String?
-  jobAssignment   JobAssignment? @relation(fields: [jobAssignmentId], references: [id])
-
-  // Väzba na Tender
-  tenderId  String?
-  tender    Tender?  @relation(fields: [tenderId], references: [id], onDelete: Cascade) 
-  
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  text      String
-  createdAt DateTime @default(now())
-}
-
-model File {
-  id         String   @id @default(uuid())
-  name       String?  @default("")
-  
-  jobId      String?  
-  job        Job?     @relation(fields: [jobId], references: [id])
-  
-  clientId   String?
-  client     Client?  @relation(fields: [clientId], references: [id])
-  
-  tenderId   String?
-  tender     Tender?  @relation(fields: [tenderId], references: [id], onDelete: Cascade) 
-  
-  uploadedBy String
-  fileUrl    String
-  fileType   String
-  createdAt  DateTime @default(now())
-}
-
-model Tender {
-  id          String    @id @default(uuid())
-  agencyId    String
-  agency      Agency    @relation(fields: [agencyId], references: [id])
-  title       String
-  description String?   // Brief
-  status      JobStatus @default(TODO) 
-  deadline    DateTime
-  budget      Float?    @default(0)
-  isConverted Boolean   @default(false)
-  
-  assignments TenderAssignment[]
-  comments    Comment[]
-  files       File[]
-  createdAt   DateTime  @default(now())
-}
-
-model TenderAssignment {
-    id          String   @id @default(uuid())
-    tenderId    String
-    tender      Tender    @relation(fields: [tenderId], references: [id], onDelete: Cascade)
-    
-    userId      String
-    user        User     @relation(fields: [userId], references: [id])
-    
-    roleOnJob   String
-
-    jobAssignmentId String? 
-    jobAssignment   JobAssignment? @relation(fields: [jobAssignmentId], references: [id])
-}
-
-model EmailTemplate {
-  id          String   @id @default(uuid())
-  slug        String   @unique
-  name        String
-  subject     String
-  body        String
-  description String?
-  updatedAt   DateTime @updatedAt
 }

@@ -203,17 +203,7 @@ export default async function DashboardPage({ params }: { params: { slug: string
           </Button>
         </div>
 
-        {/* NOTIFICATION CENTER - TOP */}
-        {!isCreative && recentNotifications.length > 0 && (
-          <NotificationCenter
-            notifications={recentNotifications.map(n => ({
-              id: n.id,
-              title: n.title,
-              message: n.message,
-              createdAt: n.createdAt
-            }))}
-          />
-        )}
+        {/* NOTIFICATION CENTER - REMOVED */}
 
         {/* 4 COLORED STAT CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
