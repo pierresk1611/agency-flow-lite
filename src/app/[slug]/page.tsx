@@ -50,13 +50,22 @@ export default async function DashboardPage({ params }: { params: { slug: string
     const overdue = jobs.filter(j => j.status !== 'DONE' && j.deadline && j.deadline < now)
     const warning = jobs.filter(j => j.status !== 'DONE' && j.deadline && j.deadline >= now && j.deadline <= criticalThreshold)
 
+    const jobSort = (a: any, b: any) => {
+      const dateA = a.deadline ? new Date(a.deadline).getTime() : Infinity
+      const dateB = b.deadline ? new Date(b.deadline).getTime() : Infinity
+      if (dateA !== dateB) return dateA - dateB
+      const prioA = a.campaign?.client?.priority || 0
+      const prioB = b.campaign?.client?.priority || 0
+      return prioB - prioA
+    }
+
     // 2.5️⃣ BURNING TASKS (Deadline < 5 days)
     const burningTasks = jobs.filter(j =>
       j.status !== 'DONE' &&
       j.deadline &&
       j.deadline >= now &&
       j.deadline <= addDays(now, 5)
-    ).sort((a, b) => (new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime()))
+    ).sort(jobSort)
 
     // 4️⃣ TIMESHEETS
     const pendingCount = await prisma.timesheet.count({
@@ -103,12 +112,14 @@ export default async function DashboardPage({ params }: { params: { slug: string
       { name: 'DONE', value: statusCounts.DONE }
     ]
 
-    const overdueProjectsData = overdue.map(j => ({
-      id: j.id,
-      title: j.title,
-      clientName: j.campaign?.client?.name || 'Interné',
-      deadline: j.deadline!
-    }))
+    const overdueProjectsData = overdue
+      .sort(jobSort)
+      .map(j => ({
+        id: j.id,
+        title: j.title,
+        clientName: j.campaign?.client?.name || 'Interné',
+        deadline: j.deadline!
+      }))
 
     // 7️⃣ TEAM COUNT
     const teamCount = await prisma.user.count({ where: { agencyId: agency.id, active: true } })
@@ -130,7 +141,11 @@ export default async function DashboardPage({ params }: { params: { slug: string
         }
       })
       .filter(j => j.plan > 0 || j.real > 0)
-      .sort((a, b) => Math.max(b.plan, b.real) - Math.max(a.plan, a.real))
+      .sort((a, b) => {
+        // Here we can keep financial sort or follow the user's "aj v grafe" rule
+        // I'll follow the user's rule for consistency across dashboard
+        return jobSort(jobs.find(x => x.id === a.id), jobs.find(x => x.id === b.id))
+      })
 
     // 9️⃣ CREATIVE TIME DATA
     let creativeTimeData: { name: string, minutes: number }[] = []
