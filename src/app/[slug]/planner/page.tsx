@@ -73,7 +73,8 @@ export default async function PlannerPage({ params }: { params: { slug: string }
   const users = await prisma.user.findMany({
     where: {
       agencyId: agency.id,
-      active: true
+      active: true,
+      role: { not: 'SUPERADMIN' } // Superadmina nezobrazujeme v plánovači
     },
     include: {
       plannerEntries: {
