@@ -3,7 +3,6 @@ import { JobStatus } from '@prisma/client'
 import { getSession } from '@/lib/session'
 import { redirect, notFound } from 'next/navigation'
 import { TrafficWorkloadManager } from '@/components/traffic-workload-manager'
-import { TrafficRequests } from '@/components/traffic-requests'
 
 export const dynamic = 'force-dynamic'
 
@@ -58,8 +57,6 @@ export default async function TrafficPage({ params }: { params: { slug: string }
 
   return (
     <div className="space-y-8 pb-20">
-      <TrafficRequests />
-
       {/* Pre každý groupName renderujeme TrafficWorkloadManager */}
       <div className="space-y-12">
         {Object.entries(groups).map(([groupName, members]) => (

@@ -10,7 +10,7 @@ import Link from 'next/link'
 // Grafy
 import { WorkloadChart } from "@/components/charts/workload-chart"
 import { TimesheetStatusChart } from "@/components/charts/timesheet-status-chart"
-import { JobStatusChart } from "@/components/charts/job-status-chart"
+import { TaskStatusOverview } from "@/components/task-status-overview"
 import { BurningTasks } from "@/components/burning-tasks"
 import { BudgetChart } from "@/components/charts/budget-chart"
 import { BarChart3 } from "lucide-react"
@@ -102,6 +102,13 @@ export default async function DashboardPage({ params }: { params: { slug: string
       { name: 'IN_PROGRESS', value: statusCounts.IN_PROGRESS },
       { name: 'DONE', value: statusCounts.DONE }
     ]
+
+    const overdueProjectsData = overdue.map(j => ({
+      id: j.id,
+      title: j.title,
+      clientName: j.campaign?.client?.name || 'Interné',
+      deadline: j.deadline!
+    }))
 
     // 7️⃣ TEAM COUNT
     const teamCount = await prisma.user.count({ where: { agencyId: agency.id, active: true } })
@@ -271,44 +278,31 @@ export default async function DashboardPage({ params }: { params: { slug: string
           </Card>
         )}
 
-        {/* CHARTS SECTION - 2 COLUMNS */}
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-          {/* WORKLOAD CHART */}
-          {!isCreative && workloadData.length > 0 && (
-            <Card className="shadow-xl border-none ring-1 ring-slate-200">
-              <CardHeader className="border-b bg-slate-50/50 py-3">
-                <div className="flex flex-col gap-1">
-                  <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500">
-                    <Users className="h-4 w-4" /> Vyťaženosť tímu (7 dní)
-                  </CardTitle>
-                  <p className="text-[10px] text-slate-400 font-medium">
-                    Súčet naplánovaných hodín na najbližších 7 dní.
-                  </p>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <WorkloadChart data={workloadData} slug={params.slug} />
-              </CardContent>
-            </Card>
-          )}
+        {/* STAV ÚLOH & OVERDUE (NEW WIDGET) */}
+        <TaskStatusOverview
+          statusData={jobStatusData}
+          overdueProjects={overdueProjectsData}
+          slug={params.slug}
+        />
 
-          {/* JOB STATUS CHART */}
+        {/* WORKLOAD CHART */}
+        {!isCreative && workloadData.length > 0 && (
           <Card className="shadow-xl border-none ring-1 ring-slate-200">
             <CardHeader className="border-b bg-slate-50/50 py-3">
               <div className="flex flex-col gap-1">
                 <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-500">
-                  <ListChecks className="h-4 w-4" /> Stav úloh
+                  <Users className="h-4 w-4" /> Vyťaženosť tímu (7 dní)
                 </CardTitle>
                 <p className="text-[10px] text-slate-400 font-medium">
-                  Prehľad počtu jobov v jednotlivých fázach.
+                  Súčet naplánovaných hodín na najbližších 7 dní.
                 </p>
               </div>
             </CardHeader>
             <CardContent className="pt-6">
-              <JobStatusChart data={jobStatusData} />
+              <WorkloadChart data={workloadData} slug={params.slug} />
             </CardContent>
           </Card>
-        </div>
+        )}
       </div>
     )
   } catch (error) {
