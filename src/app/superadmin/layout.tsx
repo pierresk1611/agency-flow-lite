@@ -1,3 +1,4 @@
+import { prisma } from '@/lib/prisma'
 import { SuperAdminNav } from '@/components/superadmin-nav'
 
 export const dynamic = 'force-dynamic'
