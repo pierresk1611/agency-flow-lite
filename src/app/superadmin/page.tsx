@@ -76,70 +76,36 @@ export default function SuperAdminPage() {
   const pendingCount = agencies.filter(a => a.status === 'PENDING').length
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 p-8">
+    <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex justify-between items-center border-b pb-6">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Správa platformy</h2>
-          <p className="text-slate-500 text-sm">Prehľad všetkých agentúr v systéme</p>
+          <h2 className="text-3xl font-bold text-slate-900 tracking-tight italic tracking-tighter">Zoznam Agentúr</h2>
+          <p className="text-slate-500 text-sm">Prehľad a správa všetkých inštancií AgencyFlow</p>
         </div>
 
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            className="h-11 font-bold border-slate-300"
-            onClick={() => router.push('/superadmin/emails')}
-          >
-            <Inbox className="h-4 w-4 mr-2" />
-            Šablóny Emailov
-          </Button>
-
-          <Button
-            variant="outline"
-            className="h-11 font-bold border-slate-300"
-            onClick={() => router.push('/superadmin/agencies')}
-          >
-            <Building className="h-4 w-4 mr-2" />
-            Správa Agentúr
-          </Button>
-
-          <Button
-            variant="outline"
-            className="h-11 font-bold border-slate-300 relative"
-            onClick={() => router.push('/superadmin/requests')}
-          >
-            <Users className="h-4 w-4 mr-2" />
-            Žiadosti
-            {pendingCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
-                {pendingCount}
-              </span>
-            )}
-          </Button>
-
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-slate-900 hover:bg-slate-800 text-white font-bold h-11 px-6 shadow-lg transition-all active:scale-95">
-                <Plus className="h-5 w-5 mr-2" /> Nová Agentúra
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-slate-900 hover:bg-slate-800 text-white font-bold h-11 px-6 shadow-lg transition-all active:scale-95">
+              <Plus className="h-5 w-5 mr-2" /> Nová Agentúra
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Vytvoriť novú agentúru</DialogTitle>
+              <DialogDescription>Systém automaticky vygeneruje unikátnu URL adresu a vytvorí účet pre Admina.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2"><Label>Názov firmy</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="Napr. Kreatívne Štúdio s.r.o." /></div>
+              <div className="grid gap-2"><Label>Email hlavného admina</Label><Input value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@firma.sk" /></div>
+              <div className="grid gap-2"><Label>Heslo pre admina</Label><Input type="password" value={password} onChange={e => setPassword(e.target.value)} /></div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleCreate} disabled={submitting} className="w-full bg-slate-900 text-white h-11">
+                {submitting ? <Loader2 className="animate-spin mr-2" /> : "Vytvoriť a aktivovať inštanciu"}
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Vytvoriť novú agentúru</DialogTitle>
-                <DialogDescription>Systém automaticky vygeneruje unikátnu URL adresu a vytvorí účet pre Admina.</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2"><Label>Názov firmy</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder="Napr. Kreatívne Štúdio s.r.o." /></div>
-                <div className="grid gap-2"><Label>Email hlavného admina</Label><Input value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@firma.sk" /></div>
-                <div className="grid gap-2"><Label>Heslo pre admina</Label><Input type="password" value={password} onChange={e => setPassword(e.target.value)} /></div>
-              </div>
-              <DialogFooter>
-                <Button onClick={handleCreate} disabled={submitting} className="w-full bg-slate-900 text-white h-11">
-                  {submitting ? <Loader2 className="animate-spin mr-2" /> : "Vytvoriť a aktivovať inštanciu"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card className="shadow-xl border-none ring-1 ring-slate-200">
