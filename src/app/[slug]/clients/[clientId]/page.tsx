@@ -51,12 +51,12 @@ export default async function ClientDetailPage({ params }: { params: { slug: str
     <div className="space-y-6 pb-10">
       {/* ALERT: IMPORTANT NOTE */}
       {client.importantNote && (
-        <Alert variant="destructive" className="mb-8 border-2 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
-          <AlertCircle className="h-5 w-5" />
-          <AlertTitle className="font-black uppercase tracking-tight text-xs mb-1">
-            Dôležité upozornenie pre tím
+        <Alert variant="destructive" className="mb-8 border-2 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500 bg-red-50/50 border-red-200">
+          <AlertCircle className="h-5 w-5 mt-0.5" />
+          <AlertTitle>
+            Dôležité upozornenie pre tím / Red Flag
           </AlertTitle>
-          <AlertDescription className="text-sm font-medium leading-relaxed">
+          <AlertDescription>
             {client.importantNote}
           </AlertDescription>
         </Alert>
