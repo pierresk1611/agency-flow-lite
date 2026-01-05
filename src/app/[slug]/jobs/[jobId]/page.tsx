@@ -31,7 +31,7 @@ export default async function JobDetailPage({ params }: { params: { slug: string
     const job = await prisma.job.findFirst({
         where: {
             id: params.jobId,
-            campaign: { agencyId: session.agencyId }
+            campaign: { client: { agencyId: session.agencyId } }
         },
         include: {
             campaign: { include: { client: true } },
