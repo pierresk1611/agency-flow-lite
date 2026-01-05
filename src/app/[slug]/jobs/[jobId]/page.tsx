@@ -16,6 +16,7 @@ import { getSession } from '@/lib/session'
 import { JobTimesheetExport } from '@/components/job-timesheet-export'
 import { CloseJobButton } from '@/components/close-job-button'
 import { JobReassignDialog } from '@/components/job-reassign-dialog'
+import { JobTimesheetsDialog } from '@/components/job-timesheets-dialog'
 
 function getFileIcon(type: string) {
     if (type === 'PDF') return <FileText className="h-4 w-4 text-red-500" />
@@ -78,6 +79,8 @@ export default async function JobDetailPage({ params }: { params: { slug: string
             ...t, userEmail: a.user.email, userName: a.user.name
         }))
     ).sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+
+    const totalMinutes = history.reduce((acc, t) => acc + (t.durationMinutes || 0), 0)
 
     return (
         <div className="space-y-6 pb-10">
@@ -203,6 +206,23 @@ export default async function JobDetailPage({ params }: { params: { slug: string
                                     </div>
                                 ))
                             )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Čas strávený na jobe */}
+                    <Card className="shadow-sm border-none bg-blue-600 text-white overflow-hidden">
+                        <CardHeader className="pb-2 border-b border-white/10">
+                            <CardTitle className="text-[10px] font-black uppercase tracking-widest opacity-80">Čas strávený na jobe</CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-4 flex items-center justify-between">
+                            <div className="text-2xl font-black">{Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m</div>
+                            <JobTimesheetsDialog
+                                timesheets={history}
+                                jobTitle={job.title}
+                                trigger={
+                                    <Button variant="secondary" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-none text-[10px] font-bold uppercase h-7 px-2">Detaily</Button>
+                                }
+                            />
                         </CardContent>
                     </Card>
 
