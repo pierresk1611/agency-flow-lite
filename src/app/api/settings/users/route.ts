@@ -13,6 +13,11 @@ export async function POST(request: Request) {
         const body = await request.json()
         const { email, password, name, role, department, positionName, isNewPosition } = body
 
+        // SECURITY: Only a SUPERADMIN can grant the SUPERADMIN role
+        if (role === 'SUPERADMIN' && session.role !== 'SUPERADMIN') {
+            return NextResponse.json({ error: "Only a SUPERADMIN can grant the SUPERADMIN role" }, { status: 403 })
+        }
+
         // 1. Create Position if new
         if (isNewPosition) {
             await prisma.agencyPosition.create({
@@ -74,6 +79,18 @@ export async function PATCH(request: Request) {
         if (action === 'UPDATE_DETAILS') {
             const { name, email, role, department, positionName, isNewPosition } = body
 
+            // Check target user current role
+            const targetUser = await prisma.user.findUnique({ where: { id: userId } })
+            if (!targetUser) return NextResponse.json({ error: "User not found" }, { status: 404 })
+
+            // SECURITY: Only a SUPERADMIN can modify another SUPERADMIN or change someone to SUPERADMIN
+            const isTargetSuper = targetUser.role === 'SUPERADMIN'
+            const isNewRoleSuper = role === 'SUPERADMIN'
+
+            if ((isTargetSuper || isNewRoleSuper) && session.role !== 'SUPERADMIN') {
+                return NextResponse.json({ error: "Nedostatočné oprávnenia pre manipuláciu so Superadmin rolou." }, { status: 403 })
+            }
+
             // 1. Create Position if new (Check Logic same as POST)
             if (isNewPosition) {
                 await prisma.agencyPosition.create({
@@ -116,6 +133,12 @@ export async function DELETE(request: Request) {
         const { userId } = body
 
         if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 })
+
+        // SECURITY: Only a SUPERADMIN can delete another SUPERADMIN
+        const targetUser = await prisma.user.findUnique({ where: { id: userId } })
+        if (targetUser?.role === 'SUPERADMIN' && session.role !== 'SUPERADMIN') {
+            return NextResponse.json({ error: "Nedostatočné oprávnenia pre zmazanie Superadmina." }, { status: 403 })
+        }
 
         // Soft Delete (Deactivate)
         await prisma.user.update({

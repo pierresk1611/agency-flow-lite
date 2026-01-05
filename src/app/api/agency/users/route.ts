@@ -71,10 +71,17 @@ export async function POST(request: Request) {
   try {
     // ✅ await session
     const session = await getSession()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session || !['ADMIN', 'SUPERADMIN', 'ACCOUNT'].includes(session.role)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const body = await request.json()
     const { email, name, password, role, position, hourlyRate, costRate } = body
+
+    // SECURITY: Only a SUPERADMIN can grant the SUPERADMIN role
+    if (role === 'SUPERADMIN' && session.role !== 'SUPERADMIN') {
+      return NextResponse.json({ error: "Nedostatočné oprávnenia pre pridelenie Superadmin role." }, { status: 403 })
+    }
 
     if (!email || !password || !role)
       return NextResponse.json({ error: 'Chýbajú údaje' }, { status: 400 })
