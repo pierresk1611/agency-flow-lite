@@ -21,9 +21,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Neplatný formát dátumu' }, { status: 400 })
     }
 
+    // 3. Ownership Verification: Ensure campaign belongs to the user's agency
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: campaignId },
+      include: { client: true }
+    })
+
+    if (!campaign || campaign.client.agencyId !== session.agencyId) {
+      return NextResponse.json({ error: 'Project not found or access denied' }, { status: 404 })
+    }
+
     console.log("Creating JOB:", { title, deadline, campaignId, externalLink })
 
-    // 3. Create Job
+    // 4. Create Job
     const job = await prisma.job.create({
       data: {
         title,

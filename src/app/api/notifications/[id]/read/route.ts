@@ -7,10 +7,18 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     try {
-        await prisma.notification.update({
-            where: { id: params.id },
+        const result = await prisma.notification.updateMany({
+            where: {
+                id: params.id,
+                userId: session.userId
+            },
             data: { isRead: true }
         })
+
+        if (result.count === 0) {
+            return NextResponse.json({ error: 'Notification not found or access denied' }, { status: 404 })
+        }
+
         return NextResponse.json({ success: true })
     } catch (error) {
         return NextResponse.json({ error: 'Failed' }, { status: 500 })

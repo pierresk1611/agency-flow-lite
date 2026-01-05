@@ -10,6 +10,15 @@ export async function GET(request: Request, { params }: { params: { clientId: st
 
         const clientId = params.clientId
 
+        // STRICT AGENCY CHECK: Verify client ownership
+        const client = await prisma.client.findUnique({
+            where: { id: clientId }
+        })
+
+        if (!client || client.agencyId !== session.agencyId) {
+            return NextResponse.json({ error: 'Client not found or access denied' }, { status: 404 })
+        }
+
         // Fetch timesheets connected to this client via Campaign -> Job
         const timesheets = await prisma.timesheet.findMany({
             where: {

@@ -11,6 +11,16 @@ export async function PATCH(
     const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    // STRICT AGENCY CHECK: Verify timesheet ownership
+    const timesheet = await prisma.timesheet.findUnique({
+      where: { id: params.timesheetId },
+      include: { jobAssignment: { include: { job: { include: { campaign: { include: { client: true } } } } } } }
+    })
+
+    if (!timesheet || timesheet.jobAssignment.job.campaign.client.agencyId !== session.agencyId) {
+      return NextResponse.json({ error: 'Timesheet not found or access denied' }, { status: 404 })
+    }
+
     // 1. Update status
     const updated = await prisma.timesheet.update({
       where: { id: params.timesheetId },

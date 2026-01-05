@@ -7,9 +7,13 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    let whereClause: any = { userId: session.userId, isRead: false }
+    let whereClause: any = {
+      userId: session.userId,
+      isRead: false,
+      user: { agencyId: session.agencyId } // Strict agency filter
+    }
 
-    // GOD MODE: Superadmin vidí všetky notifikácie v agentúre
+    // GOD MODE: Superadmin sees all notifications in the agency
     if (session.role === 'SUPERADMIN') {
       whereClause = {
         user: { agencyId: session.agencyId },
@@ -19,7 +23,7 @@ export async function GET() {
 
     const notifications = await prisma.notification.findMany({
       where: whereClause,
-      include: { user: { select: { name: true, email: true } } }, // Aby sme videli komu patrí
+      include: { user: { select: { name: true, email: true } } },
       orderBy: { createdAt: 'desc' }
     })
     return NextResponse.json(notifications)
@@ -37,19 +41,28 @@ export async function PATCH(request: Request) {
     const { id } = body
 
     if (id) {
-      // Mark SINGLE as read
+      // Mark SINGLE as read - Verify ownership via agency
+      const notification = await prisma.notification.findUnique({
+        where: { id },
+        include: { user: true }
+      })
+
+      if (!notification || notification.user.agencyId !== session.agencyId) {
+        return NextResponse.json({ error: 'Notification not found or access denied' }, { status: 404 })
+      }
+
       await prisma.notification.update({
         where: { id },
         data: { isRead: true }
       })
     } else {
-      // Mark ALL as read (Legacy support or explicit "Mark All" button if needed)
-      // User requested manual only, but good to have capability if needed, 
-      // though for safety maybe restrict to ID only or keep generic.
-      // Given the requirement "Remove automatic call", we primarily need the ID version.
-      // Let's implement generic update for user's notifications.
+      // Mark ALL as read - Filtered by agency
       await prisma.notification.updateMany({
-        where: { userId: session.userId, isRead: false },
+        where: {
+          userId: session.userId,
+          isRead: false,
+          user: { agencyId: session.agencyId }
+        },
         data: { isRead: true }
       })
     }

@@ -15,15 +15,15 @@ export async function GET(request: NextRequest) {
         }
 
         const { searchParams } = new URL(request.url)
-        const agencyId = searchParams.get('agencyId')
+        let agencyId = searchParams.get('agencyId')
+
+        // Force current agency unless SUPERADMIN
+        if (session.role !== 'SUPERADMIN') {
+            agencyId = session.agencyId
+        }
 
         if (!agencyId) {
             return NextResponse.json({ error: 'Agency ID required' }, { status: 400 })
-        }
-
-        // Verify user has access to this agency
-        if (session.role !== 'SUPERADMIN' && session.agencyId !== agencyId) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 
         // Fetch all jobs with financial data

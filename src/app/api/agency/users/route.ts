@@ -87,8 +87,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Chýbajú údaje' }, { status: 400 })
 
     const existing = await prisma.user.findUnique({ where: { email } })
-    if (existing)
-      return NextResponse.json({ error: 'Užívateľ s týmto emailom už existuje' }, { status: 400 })
+    if (existing) {
+      // If user exists but is in a DIFFERENT agency, we still block for privacy or handle as multi-agency (not supported yet)
+      return NextResponse.json({ error: 'Užívateľ s týmto emailom už existuje v systéme' }, { status: 400 })
+    }
 
     const passwordHash = await bcrypt.hash(password, 10)
 

@@ -10,6 +10,15 @@ export async function PATCH(req: Request, { params }: { params: { clientId: stri
         const json = await req.json()
         const { name, companyId, vatId, billingAddress, importantNote } = json
 
+        // Ownership Verification
+        const client = await prisma.client.findUnique({
+            where: { id: params.clientId }
+        })
+
+        if (!client || client.agencyId !== session.agencyId) {
+            return NextResponse.json({ error: 'Client not found or access denied' }, { status: 404 })
+        }
+
         const updated = await prisma.client.update({
             where: { id: params.clientId },
             data: {

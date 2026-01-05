@@ -36,6 +36,17 @@ export async function POST(request: Request) {
     // Iba ak existuje a nie je 'INTERNAL', uloží ID jobu
     const finalJobId = jobId && jobId !== 'INTERNAL' ? jobId : null
 
+    // STRICT AGENCY CHECK: Verify job ownership
+    if (finalJobId) {
+      const job = await prisma.job.findUnique({
+        where: { id: finalJobId },
+        include: { campaign: { include: { client: true } } }
+      })
+      if (!job || job.campaign.client.agencyId !== session.agencyId) {
+        return NextResponse.json({ error: 'Job not found or access denied' }, { status: 404 })
+      }
+    }
+
     const entry = await prisma.plannerEntry.create({
       data: {
         userId: session.userId,

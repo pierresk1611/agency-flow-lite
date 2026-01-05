@@ -12,13 +12,35 @@ export async function PATCH(req: Request, { params }: { params: { jobId: string 
     const { assignmentId, targetUserId } = body
     if (!assignmentId || !targetUserId) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 
-    // Validate user role: only ADMIN/ACCOUNT/TRAFFIC/SUPERADMIN can reassign immediately
-    if (!['ADMIN','ACCOUNT','TRAFFIC','SUPERADMIN'].includes(session.role)) {
+    // Validate user role
+    if (!['ADMIN', 'ACCOUNT', 'TRAFFIC', 'SUPERADMIN'].includes(session.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // STRICT AGENCY CHECK: Verify job ownership
+    const job = await prisma.job.findUnique({
+      where: { id: params.jobId },
+      include: { campaign: { include: { client: true } } }
+    })
+
+    if (!job || job.campaign.client.agencyId !== session.agencyId) {
+      return NextResponse.json({ error: 'Job not found or access denied' }, { status: 404 })
+    }
+
+    // STRICT AGENCY CHECK: Verify target user ownership
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId, agencyId: session.agencyId }
+    })
+
+    if (!targetUser) {
+      return NextResponse.json({ error: 'Target user not found or access denied' }, { status: 404 })
+    }
+
     // Update assignment
-    const assignment = await prisma.jobAssignment.update({ where: { id: assignmentId }, data: { userId: targetUserId } })
+    const assignment = await prisma.jobAssignment.update({
+      where: { id: assignmentId },
+      data: { userId: targetUserId }
+    })
 
     // Notify original and new assignee
     try {

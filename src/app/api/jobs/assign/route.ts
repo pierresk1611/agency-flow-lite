@@ -15,6 +15,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Chýbajúce údaje' }, { status: 400 })
     }
 
+    // STRICT AGENCY CHECK: Verify job ownership
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+      include: { campaign: { include: { client: true } } }
+    })
+
+    if (!job || job.campaign.client.agencyId !== session.agencyId) {
+      return NextResponse.json({ error: 'Job not found or access denied' }, { status: 404 })
+    }
+
+    // STRICT AGENCY CHECK: Verify target user belongs to the same agency
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId, agencyId: session.agencyId }
+    })
+    if (!targetUser) {
+      return NextResponse.json({ error: 'Užívateľ nenájdený v tejto agentúre' }, { status: 404 })
+    }
+
     // Overenie, či užívateľ ešte nie je priradený
     const existing = await prisma.jobAssignment.findFirst({
       where: { jobId, userId }
@@ -30,7 +48,21 @@ export async function POST(request: Request) {
         userId,
         roleOnJob: roleOnJob?.trim() || 'Contributor',
       },
-      include: { job: { include: { campaign: { include: { client: { include: { agency: true } } } } } } } // Fetch deeply for notification
+      include: {
+        job: {
+          include: {
+            campaign: {
+              include: {
+                client: {
+                  include: {
+                    agency: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     })
 
     // NOTIFIKÁCIA: Assign Job

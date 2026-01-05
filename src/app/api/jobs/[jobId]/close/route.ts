@@ -11,6 +11,16 @@ export async function POST(request: Request, { params }: { params: { jobId: stri
 
         const jobId = params.jobId
 
+        // STRICT AGENCY CHECK: Verify job ownership
+        const job = await prisma.job.findUnique({
+            where: { id: jobId },
+            include: { campaign: { include: { client: true } } }
+        })
+
+        if (!job || job.campaign.client.agencyId !== session.agencyId) {
+            return NextResponse.json({ error: 'Job not found or access denied' }, { status: 404 })
+        }
+
         await prisma.job.update({
             where: { id: jobId },
             data: { status: 'DONE', archivedAt: new Date() } // Set to DONE and archive

@@ -10,6 +10,16 @@ export async function GET(request: Request, { params }: { params: { jobId: strin
 
         const jobId = params.jobId
 
+        // STRICT AGENCY CHECK: Verify job ownership
+        const job = await prisma.job.findUnique({
+            where: { id: jobId },
+            include: { campaign: { include: { client: true } } }
+        })
+
+        if (!job || job.campaign.client.agencyId !== session.agencyId) {
+            return NextResponse.json({ error: 'Job not found or access denied' }, { status: 404 })
+        }
+
         const timesheets = await prisma.timesheet.findMany({
             where: {
                 jobAssignment: {

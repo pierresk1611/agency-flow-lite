@@ -1,19 +1,16 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { cookies } from 'next/headers'
-import * as jwt from 'jsonwebtoken'
+import { getSession } from '@/lib/session'
 import { createNotification } from '@/lib/notifications'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret'
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = cookies()
-    const token = cookieStore.get('token')?.value
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getSession()
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string }
-    const currentUserId = decoded.userId
+    const currentUserId = session.userId
 
     const { timesheetId, status } = await request.json()
     if (!timesheetId || !['APPROVED', 'REJECTED'].includes(status))
@@ -21,9 +18,11 @@ export async function POST(request: Request) {
 
     const timesheet = await prisma.timesheet.findUnique({
       where: { id: timesheetId },
-      include: { jobAssignment: { include: { user: true, job: true } } }
+      include: { jobAssignment: { include: { user: true, job: { include: { campaign: { include: { client: true } } } } } } }
     })
-    if (!timesheet) return NextResponse.json({ error: 'Timesheet nenájdený' }, { status: 404 })
+    if (!timesheet || timesheet.jobAssignment.job.campaign.client.agencyId !== session.agencyId) {
+      return NextResponse.json({ error: 'Timesheet nenájdený alebo mimo agentúry' }, { status: 404 })
+    }
 
     if (timesheet.status === status)
       return NextResponse.json({ success: true, message: 'Already set' })

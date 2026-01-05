@@ -15,10 +15,12 @@ export async function POST(req: Request, { params }: { params: { requestId: stri
 
         const request = await prisma.reassignmentRequest.findUnique({
             where: { id: requestId },
-            include: { assignment: true }
+            include: { assignment: { include: { job: { include: { campaign: { include: { client: true } } } } } } }
         })
 
-        if (!request) return NextResponse.json({ error: 'Request not found' }, { status: 404 })
+        if (!request || request.assignment.job.campaign.client.agencyId !== session.agencyId) {
+            return NextResponse.json({ error: 'Request not found or access denied' }, { status: 404 })
+        }
 
         if (action === 'APPROVE') {
             // 1. Update Assignment

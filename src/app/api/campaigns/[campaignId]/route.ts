@@ -24,15 +24,24 @@ export async function POST(
     }
 
     const parsedBudget = parseFloat(budget)
+
+    // STRICT AGENCY CHECK: Verify Campaign ownership
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: params.campaignId },
+      include: { client: true }
+    })
+
+    if (!campaign || campaign.client.agencyId !== session.agencyId) {
+      return NextResponse.json({ error: 'Project not found or access denied' }, { status: 404 })
+    }
+
     const job = await prisma.job.create({
       data: {
         title,
         deadline: parsedDeadline,
         budget: isNaN(parsedBudget) ? 0 : parsedBudget,
         campaignId: params.campaignId,
-        status: 'TODO',
-        createdById: session.userId,
-        agencyId: session.agencyId
+        status: 'TODO'
       }
     })
 

@@ -68,6 +68,10 @@ export async function PATCH(request: Request) {
         const { action, userId, newPassword } = body
 
         if (action === 'RESET_PASSWORD') {
+            // STRICT AGENCY CHECK: Verify target user ownership
+            const targetUser = await prisma.user.findUnique({ where: { id: userId, agencyId: session.agencyId } })
+            if (!targetUser) return NextResponse.json({ error: "User not found or access denied" }, { status: 404 })
+
             const passwordHash = await bcrypt.hash(newPassword, 10)
             await prisma.user.update({
                 where: { id: userId },
@@ -79,9 +83,9 @@ export async function PATCH(request: Request) {
         if (action === 'UPDATE_DETAILS') {
             const { name, email, role, department, positionName, isNewPosition } = body
 
-            // Check target user current role
-            const targetUser = await prisma.user.findUnique({ where: { id: userId } })
-            if (!targetUser) return NextResponse.json({ error: "User not found" }, { status: 404 })
+            // Check target user current role and agency
+            const targetUser = await prisma.user.findUnique({ where: { id: userId, agencyId: session.agencyId } })
+            if (!targetUser) return NextResponse.json({ error: "User not found or access denied" }, { status: 404 })
 
             // SECURITY: Only a SUPERADMIN can modify another SUPERADMIN or change someone to SUPERADMIN
             const isTargetSuper = targetUser.role === 'SUPERADMIN'
@@ -135,8 +139,11 @@ export async function DELETE(request: Request) {
         if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 })
 
         // SECURITY: Only a SUPERADMIN can delete another SUPERADMIN
-        const targetUser = await prisma.user.findUnique({ where: { id: userId } })
-        if (targetUser?.role === 'SUPERADMIN' && session.role !== 'SUPERADMIN') {
+        // STRICT AGENCY CHECK: Verify target user ownership
+        const targetUser = await prisma.user.findUnique({ where: { id: userId, agencyId: session.agencyId } })
+        if (!targetUser) return NextResponse.json({ error: "User not found or access denied" }, { status: 404 })
+
+        if (targetUser.role === 'SUPERADMIN' && session.role !== 'SUPERADMIN') {
             return NextResponse.json({ error: "Nedostatočné oprávnenia pre zmazanie Superadmina." }, { status: 403 })
         }
 

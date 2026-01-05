@@ -5,7 +5,7 @@ import { getSession } from '@/lib/session'
 export const dynamic = 'force-dynamic'
 
 export async function PATCH(
-  request: Request, 
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
@@ -31,6 +31,14 @@ export async function PATCH(
     }
 
     // 2. AKTUALIZÁCIA UŽÍVATEĽA
+    // STRICT AGENCY CHECK: Verify target user ownership
+    const targetUser = await prisma.user.findUnique({
+      where: { id: params.userId, agencyId: session.agencyId }
+    })
+    if (!targetUser) {
+      return NextResponse.json({ error: 'Užívateľ nenájdený alebo prístup zamietnutý' }, { status: 404 })
+    }
+
     const updated = await prisma.user.update({
       where: { id: params.userId },
       data: {
@@ -52,7 +60,7 @@ export async function PATCH(
 
 // DELETE ostáva len na deaktiváciu
 export async function DELETE(
-  request: Request, 
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {

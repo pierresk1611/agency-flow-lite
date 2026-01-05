@@ -25,9 +25,7 @@ export async function POST(
       where: { id: params.clientId }
     })
 
-    const isSuperAdmin = session.role === 'SUPERADMIN'
-
-    if (!client || (!isSuperAdmin && client.agencyId !== session.agencyId)) {
+    if (!client || client.agencyId !== session.agencyId) {
       return NextResponse.json({ error: 'Klient nenájdený alebo mimo agentúry' }, { status: 404 })
     }
 

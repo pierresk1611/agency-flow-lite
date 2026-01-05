@@ -1,30 +1,15 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import * as jwt from 'jsonwebtoken'
-import { headers } from 'next/headers'
+import { getSession } from '@/lib/session'
 import { sendDynamicEmail } from '@/lib/email'
 import { revalidatePath } from 'next/cache'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret'
 
-// Helper na overenie Superadmina
-function isSuperAdmin(authHeader: string | null) {
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return false
-    const token = authHeader.split(' ')[1]
-    try {
-        const decoded = jwt.verify(token, JWT_SECRET) as any
-        return decoded.role === 'SUPERADMIN'
-    } catch (e) {
-        return false
-    }
-}
-
 // GET: Zoznam nevybavených žiadostí
-export async function GET(request: Request) {
-    const headersList = headers()
-    const authHeader = headersList.get('authorization')
-
-    if (!isSuperAdmin(authHeader)) {
+export async function GET() {
+    const session = await getSession()
+    if (!session || session.role !== 'SUPERADMIN') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -68,10 +53,9 @@ export async function GET(request: Request) {
 
 // PATCH: Schválenie alebo zamietnutie
 export async function PATCH(request: Request) {
-    const headersList = headers()
-    const authHeader = headersList.get('authorization')
+    const session = await getSession()
 
-    if (!isSuperAdmin(authHeader)) {
+    if (!session || session.role !== 'SUPERADMIN') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

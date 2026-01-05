@@ -18,9 +18,22 @@ export async function POST(request: Request) {
     }
 
     // Overenie, že assignment patrí k používateľovi alebo že je Creative
-    const assignment = await prisma.assignment.findUnique({ where: { id: assignmentId } })
-    if (!assignment) {
-      return NextResponse.json({ error: 'Neplatný assignment' }, { status: 404 })
+    // STRICT AGENCY CHECK: Verify assignment ownership
+    const assignment = await prisma.jobAssignment.findUnique({
+      where: { id: assignmentId },
+      include: { job: { include: { campaign: { include: { client: true } } } } }
+    })
+
+    if (!assignment || assignment.job.campaign.client.agencyId !== session.agencyId) {
+      return NextResponse.json({ error: 'Neplatný assignment alebo prístup zamietnutý' }, { status: 404 })
+    }
+
+    // STRICT AGENCY CHECK: Verify target user belongs to the same agency
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId, agencyId: session.agencyId }
+    })
+    if (!targetUser) {
+      return NextResponse.json({ error: 'Cieľový užívateľ nenájdený v tejto agentúre' }, { status: 404 })
     }
 
     // Len Creative môže podávať reassign request (prípadne pridaj logiku pre adminov)

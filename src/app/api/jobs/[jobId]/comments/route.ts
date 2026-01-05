@@ -7,6 +7,16 @@ export async function GET(req: Request, { params }: { params: { jobId: string } 
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     try {
+        // STRICT AGENCY CHECK: Verify job ownership
+        const job = await prisma.job.findUnique({
+            where: { id: params.jobId },
+            include: { campaign: { include: { client: true } } }
+        })
+
+        if (!job || job.campaign.client.agencyId !== session.agencyId) {
+            return NextResponse.json({ error: 'Job not found or access denied' }, { status: 404 })
+        }
+
         const comments = await prisma.comment.findMany({
             where: { jobId: params.jobId },
             include: { user: { select: { id: true, name: true, email: true, role: true } } },
@@ -26,6 +36,19 @@ export async function POST(req: Request, { params }: { params: { jobId: string }
         const { text } = await req.json()
         if (!text) return NextResponse.json({ error: 'Text required' }, { status: 400 })
 
+        // STRICT AGENCY CHECK: Verify job ownership
+        const job = await prisma.job.findUnique({
+            where: { id: params.jobId },
+            include: {
+                campaign: { include: { client: true } },
+                assignments: true
+            }
+        })
+
+        if (!job || job.campaign.client.agencyId !== session.agencyId) {
+            return NextResponse.json({ error: 'Job not found or access denied' }, { status: 404 })
+        }
+
         // 1. Vytvor komentár
         const comment = await prisma.comment.create({
             data: {
@@ -34,12 +57,6 @@ export async function POST(req: Request, { params }: { params: { jobId: string }
                 text
             },
             include: { user: { select: { id: true, name: true, email: true } } }
-        })
-
-        // 2. Nájdi assignees na jobe (okrem autora)
-        const job = await prisma.job.findUnique({
-            where: { id: params.jobId },
-            include: { assignments: true }
         })
 
         if (job) {
@@ -79,7 +96,7 @@ export async function POST(req: Request, { params }: { params: { jobId: string }
                     data: uniqueRecipients.map(uid => ({
                         userId: uid,
                         title: `Nový komentár: ${job.title}`,
-                        message: `${session.slug || session.email} pridal komentár: "${text.substring(0, 30)}..."`,
+                        message: `${session.slug || session.userId} pridal komentár: "${text.substring(0, 30)}..."`,
                         link: `/${session.slug || session.agencyId}/jobs/${params.jobId}`, // Relatívna linka
                         isRead: false
                     }))

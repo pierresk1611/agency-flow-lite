@@ -7,13 +7,23 @@ export async function POST(
   { params }: { params: { campaignId: string } }
 ) {
   try {
-    const session = getSession()
+    const session = await getSession()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
     const { title, deadline, budget } = body
 
     if (!title || !deadline) return NextResponse.json({ error: 'Názov a termín sú povinné' }, { status: 400 })
+
+    // STRICT AGENCY CHECK: Verify Campaign ownership
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: params.campaignId },
+      include: { client: true }
+    })
+
+    if (!campaign || campaign.client.agencyId !== session.agencyId) {
+      return NextResponse.json({ error: 'Project not found or access denied' }, { status: 404 })
+    }
 
     const job = await prisma.job.create({
       data: {
