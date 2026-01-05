@@ -56,7 +56,9 @@ const ROLES = [
     { value: 'SUPERADMIN', label: 'Superadmin' },
 ]
 
-export function UsersSettings({ agencyId, initialUsers, initialPositions }: { agencyId: string, initialUsers: any[], initialPositions: any[] }) {
+export function UsersSettings({ agencyId, initialUsers, initialPositions, currentRole }: { agencyId: string, initialUsers: any[], initialPositions: any[], currentRole: string }) {
+    const isSuperAdmin = currentRole === 'SUPERADMIN'
+    const availableRoles = isSuperAdmin ? ROLES : ROLES.filter(r => r.value !== 'SUPERADMIN')
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [positions, setPositions] = useState(initialPositions)
@@ -262,7 +264,7 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
                                 <div className="grid gap-2"><Label>Rola</Label>
                                     <Select value={newRole} onValueChange={setNewRole}>
                                         <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>{ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
+                                        <SelectContent>{availableRoles.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
                                     </Select>
                                 </div>
                             </div>
@@ -326,17 +328,19 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                                <Button variant="ghost" size="sm" onClick={() => openEditDialog(u, dept)} title="Upraviť detaily">
-                                                    <Pencil className="h-4 w-4 text-slate-400 hover:text-blue-500" />
-                                                </Button>
-                                                <Button variant="ghost" size="sm" onClick={() => setResetUserId(u.id)} title="Zmeniť heslo">
-                                                    <KeyRound className="h-4 w-4 text-slate-400 hover:text-amber-500" />
-                                                </Button>
-                                                <Button variant="ghost" size="sm" onClick={() => setDeletingUser(u)} title="Odstrániť (Deaktivovať)">
-                                                    <Trash2 className="h-4 w-4 text-slate-400 hover:text-red-500" />
-                                                </Button>
-                                            </div>
+                                            {(!u.role || u.role !== 'SUPERADMIN' || isSuperAdmin) && (
+                                                <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                    <Button variant="ghost" size="sm" onClick={() => openEditDialog(u, dept)} title="Upraviť detaily">
+                                                        <Pencil className="h-4 w-4 text-slate-400 hover:text-blue-500" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" onClick={() => setResetUserId(u.id)} title="Zmeniť heslo">
+                                                        <KeyRound className="h-4 w-4 text-slate-400 hover:text-amber-500" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" onClick={() => setDeletingUser(u)} title="Odstrániť (Deaktivovať)">
+                                                        <Trash2 className="h-4 w-4 text-slate-400 hover:text-red-500" />
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -359,7 +363,7 @@ export function UsersSettings({ agencyId, initialUsers, initialPositions }: { ag
                             <div className="grid gap-2"><Label>Rola</Label>
                                 <Select value={editRole} onValueChange={setEditRole}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>{ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
+                                    <SelectContent>{availableRoles.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
                                 </Select>
                             </div>
                             <hr className="my-2" />

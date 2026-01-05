@@ -71,6 +71,7 @@ export default async function SettingsPage({ params }: { params: { slug: string 
                                 agencyId={agency.id}
                                 initialUsers={allUsers}
                                 initialPositions={agency.positions}
+                                currentRole={session.role}
                             />
                         </CardContent>
                     </Card>
