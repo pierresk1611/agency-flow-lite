@@ -10,7 +10,8 @@ import {
   CheckCircle2,
   Layout,
   CalendarDays,
-  Users
+  Users,
+  Mail
 } from 'lucide-react'
 
 export default async function LandingPage() {
@@ -49,7 +50,7 @@ export default async function LandingPage() {
                 <Link href="/login" className="text-sm font-bold text-slate-600 hover:text-slate-900 hidden sm:block">
                   Prihlásenie
                 </Link>
-                <Link href="/register">
+                <Link href="/login">
                   <Button className="bg-sky-600 hover:bg-sky-700 text-white font-bold shadow-lg shadow-sky-200 transition-all hover:scale-105">
                     Vyskúšať zadarmo
                   </Button>
@@ -75,7 +76,7 @@ export default async function LandingPage() {
           Rýchle, jednoduché a prepojené s vašimi obľúbenými appkami.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <Link href="/register">
+          <Link href="/login">
             <Button size="lg" className="h-14 px-8 text-lg bg-slate-900 hover:bg-slate-800 text-white w-full sm:w-auto font-bold shadow-xl">
               Začať 14-dňový Trial
             </Button>
@@ -87,16 +88,16 @@ export default async function LandingPage() {
           </Link>
         </div>
         <p className="mt-6 text-xs text-slate-400 font-medium uppercase tracking-wider">
-          Bez kreditnej karty • Okamžitý prístup • Manuálne schvaľovanie do 48 hod.
+          Bez kreditnej karty • Okamžitý prístup
         </p>
       </section>
 
-      {/* --- PROBLEM / SOLUTION --- */}
+      {/* --- PROBLEM / SOLUTION (ZOZNAM FUNKCIONALÍT) --- */}
       <section className="py-20 bg-slate-50 border-y border-slate-200">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight uppercase">Všetko podstatné, nič navyše</h2>
-            <p className="text-slate-500 font-medium">Osekali sme zbytočnosti. Zostal len čistý workflow.</p>
+            <h2 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Všetko podstatné, nič navyše</h2>
+            <p className="text-slate-500">Osekali sme zbytočnosti. Zostal len čistý workflow.</p>
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
@@ -117,10 +118,10 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* --- FEATURES GRID --- */}
+      {/* --- FEATURES GRID (DETAILNÉ VYSVETLENIE) --- */}
       <section className="py-24 px-6 max-w-7xl mx-auto" id="features">
         <div className="text-center mb-20 max-w-3xl mx-auto">
-          <h2 className="text-4xl font-black text-slate-900 mb-6 tracking-tight uppercase italic">Nástroje pre modernú prácu</h2>
+          <h2 className="text-4xl font-black text-slate-900 mb-6 tracking-tight">Nástroje pre modernú prácu</h2>
           <p className="text-lg text-slate-500 font-medium">
             Navrhnuté tak, aby vás nezdržovali od toho najdôležitejšieho – od vašej práce.
           </p>
@@ -179,31 +180,47 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* --- PRICING / INFO CTA --- */}
-      <section className="py-20 border-t border-slate-100 bg-slate-50">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-black mb-6 tracking-tight uppercase">Začnite hneď teraz</h2>
-          <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-200">
-            <p className="text-slate-600 mb-8 font-medium text-lg">
-              Vyskúšajte si AgencyFlow Lite na <strong>14 dní zadarmo</strong>.<br />
-              (S možnosťou predĺženia).
+      {/* --- CENNÍK / EARLY ACCESS (NOVÁ SEKCE) --- */}
+      <section className="py-24 border-t border-slate-100 bg-slate-50" id="pricing">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <div className="inline-block mb-4 px-3 py-1 bg-sky-100 text-sky-700 text-xs font-bold uppercase tracking-widest rounded-full">
+            Early Access Benefit
+          </div>
+          <h2 className="text-3xl md:text-4xl font-black mb-6 text-slate-900 tracking-tight">
+            Cenník pripravujeme
+          </h2>
+
+          <div className="bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-slate-200">
+            <p className="text-lg text-slate-600 mb-6 leading-relaxed font-medium">
+              Keďže je cena momentálne predmetom diskusií a ešte nie je pevne stanovená, rozhodli sme sa pre krok, ktorý oceníte.
             </p>
+
+            <div className="bg-sky-50 p-6 rounded-xl border border-sky-100 mb-8 text-left sm:text-center">
+              <p className="font-bold text-slate-900 mb-2">
+                📢 Pre všetkých, ktorí sa zapoja v tejto testovacej fáze:
+              </p>
+              <p className="text-slate-600 font-medium">
+                Ponúkame <strong className="text-sky-600">neobmedzené predĺženie bezplatného členstva (Trial)</strong> až do momentu oficiálneho oznámenia cenníka.
+              </p>
+            </div>
+
             <div className="flex justify-center">
-              <Link href="/register">
-                <Button className="w-64 h-14 text-lg bg-slate-900 text-white font-black uppercase italic shadow-2xl hover:scale-105 transition-transform">
-                  Vytvoriť účet zadarmo
+              <Link href="/login">
+                <Button className="w-full sm:w-auto h-14 px-8 text-lg bg-slate-900 text-white font-bold shadow-xl hover:scale-105 transition-transform">
+                  Získať prístup teraz
                 </Button>
               </Link>
             </div>
 
-            {/* DÔLEŽITÉ INFO */}
             <div className="mt-8 pt-6 border-t border-slate-100 text-xs text-slate-500 space-y-2 font-medium">
               <p>
-                <span className="font-bold text-slate-700 uppercase tracking-wider">Poznámka:</span> Schválenie registrácie môže trvať až <strong className="text-slate-900">48 hodín</strong> (manuálna kontrola).
+                Schválenie registrácie môže trvať <strong className="text-slate-700">48 hodín</strong> (manuálna kontrola).
               </p>
-              <p>
-                V prípade otázok nás neváhajte kontaktovať na <a href="mailto:agencyflowapp@gmail.com" className="text-sky-600 hover:underline font-bold">agencyflowapp@gmail.com</a>.
-              </p>
+              <div className="pt-1">
+                <a href="mailto:agencyflowapp@gmail.com" className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 hover:underline font-bold">
+                  <Mail className="h-3 w-3" /> agencyflowapp@gmail.com
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -212,7 +229,7 @@ export default async function LandingPage() {
       {/* --- FOOTER --- */}
       <footer className="py-12 text-center text-slate-400 text-sm bg-white border-t border-slate-100">
         <p className="mb-4 font-black text-slate-900 text-lg italic tracking-tighter">Agency<span className="text-sky-500">Lite</span></p>
-        <div className="flex justify-center gap-6 mb-6 font-bold uppercase text-[10px] tracking-widest">
+        <div className="flex justify-center gap-6 mb-6 font-bold text-xs tracking-wider uppercase">
           <Link href="#" className="hover:text-slate-600 transition">Kontakt</Link>
           <Link href="#" className="hover:text-slate-600 transition">Podmienky</Link>
           <Link href="#" className="hover:text-slate-600 transition">GDPR</Link>
@@ -238,11 +255,11 @@ function CheckItem({ text }: { text: string }) {
 
 function FeatureCard({ icon: Icon, title, desc, color, bg }: { icon: any, title: string, desc: string, color: string, bg: string }) {
   return (
-    <div className="p-8 border border-slate-100 rounded-2xl hover:shadow-2xl transition-all hover:border-sky-200 group bg-white flex flex-col items-start shadow-sm">
+    <div className="p-8 border border-slate-100 rounded-2xl hover:shadow-xl transition-all hover:border-sky-200 group bg-white flex flex-col items-start shadow-sm">
       <div className={`h-14 w-14 ${bg} ${color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 shadow-sm transition-transform`}>
         <Icon className="h-7 w-7" />
       </div>
-      <h3 className="font-bold text-xl text-slate-900 mb-3 tracking-tight italic">{title}</h3>
+      <h3 className="font-bold text-xl text-slate-900 mb-3 tracking-tight">{title}</h3>
       <p className="text-slate-500 text-sm leading-relaxed font-medium">{desc}</p>
     </div>
   )
