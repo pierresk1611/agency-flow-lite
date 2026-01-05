@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { notFound, redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { ArrowLeft, Briefcase, FileText, Download } from 'lucide-react'
+import { ArrowLeft, Briefcase, FileText, Download, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { getSession } from '@/lib/session'
@@ -13,6 +13,8 @@ import { AddJobDialog } from '@/components/add-job-dialog'
 import { ClientNewsfeed } from '@/components/client-newsfeed'
 import { format } from 'date-fns'
 import { ClientTimesheetExport } from '@/components/client-timesheet-export'
+import { ClientEditDialog } from '@/components/client-edit-dialog'
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default async function ClientDetailPage({ params }: { params: { slug: string, clientId: string } }) {
   const session = getSession()
@@ -47,6 +49,19 @@ export default async function ClientDetailPage({ params }: { params: { slug: str
 
   return (
     <div className="space-y-6 pb-10">
+      {/* ALERT: IMPORTANT NOTE */}
+      {client.importantNote && (
+        <Alert variant="destructive" className="mb-8 border-2 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
+          <AlertCircle className="h-5 w-5" />
+          <AlertTitle className="font-black uppercase tracking-tight text-xs mb-1">
+            Dôležité upozornenie pre tím
+          </AlertTitle>
+          <AlertDescription className="text-sm font-medium leading-relaxed">
+            {client.importantNote}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -59,6 +74,7 @@ export default async function ClientDetailPage({ params }: { params: { slug: str
             <div className="flex items-center gap-3">
               <h2 className="text-3xl font-bold text-slate-900">{client.name}</h2>
               <Badge variant="outline" className="bg-slate-50">P{client.priority}</Badge>
+              {!isCreative && <ClientEditDialog client={client} />}
             </div>
             <div className="text-[10px] uppercase font-bold text-slate-400 mt-1 tracking-wider">
               {client.scope || "Bez definovaného rozsahu"}

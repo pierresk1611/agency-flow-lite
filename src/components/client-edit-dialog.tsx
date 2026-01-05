@@ -71,8 +71,13 @@ export function ClientEditDialog({ client, trigger }: { client: Client, trigger?
                         <Textarea name="billingAddress" defaultValue={client.billingAddress || ''} />
                     </div>
                     <div className="space-y-2">
-                        <Label>Interná poznámka (zobrazí sa ako Alert)</Label>
-                        <Textarea name="importantNote" defaultValue={client.importantNote || ''} className="border-amber-200" />
+                        <Label className="text-amber-700">Interná poznámka (zobrazí sa ako červený ALERT)</Label>
+                        <Textarea
+                            name="importantNote"
+                            defaultValue={client.importantNote || ''}
+                            placeholder="Napr. S klientom komunikuje len Account Manager, nefakturovať bez súhlasu..."
+                            className="border-amber-200 focus:ring-amber-500 min-h-[100px]"
+                        />
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>Uložiť zmeny</Button>
                 </form>
