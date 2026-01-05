@@ -183,31 +183,31 @@ export default async function LandingPage() {
       {/* --- CENNÍK / EARLY ACCESS (NOVÁ SEKCE) --- */}
       <section className="py-24 border-t border-slate-100 bg-slate-50" id="pricing">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="inline-block mb-4 px-3 py-1 bg-sky-100 text-sky-700 text-xs font-bold uppercase tracking-widest rounded-full">
+          <div className="inline-block mb-4 px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-widest rounded-full">
             Early Access Benefit
           </div>
           <h2 className="text-3xl md:text-4xl font-black mb-6 text-slate-900 tracking-tight">
-            Cenník pripravujeme
+            Cenník je zatiaľ otvorený
           </h2>
 
           <div className="bg-white p-8 md:p-10 rounded-2xl shadow-xl border border-slate-200">
             <p className="text-lg text-slate-600 mb-6 leading-relaxed font-medium">
-              Keďže je cena momentálne predmetom diskusií a ešte nie je pevne stanovená, rozhodli sme sa pre krok, ktorý oceníte.
+              Finálna cena služby ešte nie je pevne stanovená. Pre testovaciu fázu ponúkame:
             </p>
 
-            <div className="bg-sky-50 p-6 rounded-xl border border-sky-100 mb-8 text-left sm:text-center">
+            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 mb-8 text-left sm:text-center">
               <p className="font-bold text-slate-900 mb-2">
-                📢 Pre všetkých, ktorí sa zapoja v tejto testovacej fáze:
+                📢 Pre včasných používateľov:
               </p>
               <p className="text-slate-600 font-medium">
-                Ponúkame <strong className="text-sky-600">neobmedzené predĺženie bezplatného členstva (Trial)</strong> až do momentu oficiálneho oznámenia cenníka.
+                Neobmedzené predĺženie bezplatného členstva (Trial) až do momentu oznámenia cenníka.
               </p>
             </div>
 
             <div className="flex justify-center">
-              <Link href="/login">
-                <Button className="w-full sm:w-auto h-14 px-8 text-lg bg-slate-900 text-white font-bold shadow-xl hover:scale-105 transition-transform">
-                  Získať prístup teraz
+              <Link href="/register">
+                <Button className="h-14 px-8 text-lg bg-slate-900 text-white font-bold shadow-xl hover:scale-105 transition-transform">
+                  Využiť Early Access ponuku
                 </Button>
               </Link>
             </div>

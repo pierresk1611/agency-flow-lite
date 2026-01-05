@@ -31,12 +31,13 @@ export default async function JobDetailPage({ params }: { params: { slug: string
     const job = await prisma.job.findFirst({
         where: {
             id: params.jobId,
-            campaign: { client: { agency: { slug: params.slug } } }
+            campaign: { agencyId: session.agencyId }
         },
         include: {
             campaign: { include: { client: true } },
             files: { orderBy: { createdAt: 'desc' } },
             comments: { include: { user: true }, orderBy: { createdAt: 'asc' } },
+            plannerEntries: { where: { date: { gte: new Date() } }, include: { user: true }, orderBy: { date: 'asc' } },
             assignments: {
                 include: {
                     user: true,
@@ -58,6 +59,9 @@ export default async function JobDetailPage({ params }: { params: { slug: string
     let totalPausedMinutes = 0
     let lastPauseStart: string | null = null
 
+    // Skontrolovať či niekto práve robí (Live Timer)
+    const isActive = job.assignments.some(a => a.timesheets.some(t => t.endTime === null))
+
     const myAssignment = job.assignments.find(a => a.userId === session.userId)
     if (myAssignment) {
         const activeSheet = myAssignment.timesheets.find(t => t.endTime === null)
@@ -77,6 +81,13 @@ export default async function JobDetailPage({ params }: { params: { slug: string
 
     return (
         <div className="space-y-6 pb-10">
+            {/* UI Alert */}
+            {isActive && (
+                <div className="bg-blue-600 text-white px-6 py-3 rounded-xl mb-6 flex items-center gap-3 animate-pulse shadow-lg shadow-blue-200">
+                    <Clock className="h-5 w-5" />
+                    <span className="font-bold text-sm uppercase tracking-tight">Práca na tomto jobe práve prebieha</span>
+                </div>
+            )}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <Link href={`/${params.slug}/jobs`}>

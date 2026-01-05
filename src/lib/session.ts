@@ -7,7 +7,8 @@ export interface Session {
   userId: string
   agencyId: string
   slug?: string
-  role: string
+  role: 'ADMIN' | 'ACCOUNT' | 'TRAFFIC' | 'CREATIVE' | 'SUPERADMIN'
+  godMode?: boolean
 }
 
 export function getSession(): Session | null {
@@ -22,7 +23,8 @@ export function getSession(): Session | null {
       userId: decoded.userId,
       agencyId: decoded.agencyId,
       slug: decoded.slug,
-      role: decoded.role
+      role: decoded.role,
+      godMode: decoded.godMode || false
     }
   } catch (error) {
     return null

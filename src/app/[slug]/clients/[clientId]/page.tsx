@@ -19,6 +19,7 @@ export default async function ClientDetailPage({ params }: { params: { slug: str
   if (!session) redirect('/login')
 
   const isCreative = session.role === 'CREATIVE'
+  const canSeeBilling = ['ADMIN', 'ACCOUNT', 'TRAFFIC', 'SUPERADMIN'].includes(session.role) || session.godMode
 
   // Načítať klienta vrátane kampaní, jobov a súborov
   const client = await prisma.client.findUnique({
@@ -152,6 +153,19 @@ export default async function ClientDetailPage({ params }: { params: { slug: str
               </div>
             </CardContent>
           </Card>
+
+          {canSeeBilling && (
+            <Card className="shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between border-b py-3 bg-slate-50/30">
+                <CardTitle className="text-lg">Fakturačné údaje</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-2 text-sm">
+                <p><span className="font-bold">IČO:</span> {client.companyId || '—'}</p>
+                <p><span className="font-bold">DIČ / IČ DPH:</span> {client.vatId || '—'}</p>
+                <p><span className="font-bold">Adresa:</span> {client.billingAddress || '—'}</p>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="shadow-sm border-blue-100">
             <CardHeader className="flex flex-row items-center justify-between border-b bg-blue-50/30 py-3">
